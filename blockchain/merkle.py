@@ -1,7 +1,7 @@
 #Merkle
-import .crypto import sha256_hex
+from .crypto import sha256_hex
 
-def raiz_merkle(lista_hashes: list[str]) -> str:
+def merkle_root(lista_hashes: list[str]) -> str:
     if not lista_hashes:
         return sha256_hex(b"")
 
