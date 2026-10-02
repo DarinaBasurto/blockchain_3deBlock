@@ -2,8 +2,10 @@ import hashlib
 import json
 
 # Funcion hash que devuelve el texto en utf-8 transofrmado a hexadecimal
-def sha256_hex(data: bytes) -> str:
-    hash_hex = hashlib.sha256(data.encode("utf-8")).hexdigest()
+def sha256_hex(data: bytes | str) -> str:
+    if isinstance(data, str):
+        data = data.encode("utf-8")
+    hash_hex = hashlib.sha256(data).hexdigest()
     #print(f"Hasheando el siguiente texto: {text}")
     #print(hash_hex)
     return hash_hex

@@ -11,12 +11,14 @@ def merkle_root(lista_hashes: list[str]) -> str:
         if len(nivel) % 2 != 0:
             nivel.append(nivel[-1])
 
-        siguiente_Nivel = []
+        siguiente_nivel = []
 
-        for i in range(0, len(nivel),2):
+        for i in range(0, len(nivel), 2):
             izq = nivel[i]
             der = nivel[i + 1]
             padre = sha256_hex((izq + der).encode())
-            siguiente_Nivel.add(padre)
+            siguiente_nivel.append(padre)
 
-    return siguiente_Nivel[0]
+        nivel = siguiente_nivel
+
+    return nivel[0]
