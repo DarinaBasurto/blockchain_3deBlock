@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>3deBlock · PoW Simulator</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+
+<body>
+
+<div class="page">
+
+    <!-- ============================================= -->
+    <!-- HEADER -->
+    <!-- ============================================= -->
+
+    <header class="hero">
+
+        <div>
+            <p class="eyebrow">
+                FUNDAMENTOS DE BLOCKCHAIN
+            </p>
+
+            <h1>
+                3deBlock
+                <span>PoW Lab</span>
+            </h1>
+
+            <p class="subtitle">
+                Simulador de Proof of Work con nodos,
+                firmas digitales y validación de cadena.
+            </p>
+        </div>
+
+
+        <div
+            id="chain-status"
+            class="chain-status {{ 'valid' if valid else 'invalid' }}"
+        >
+
+            {% if valid %}
+                ✓ CADENA VÁLIDA
+            {% else %}
+                ✕ CADENA ALTERADA
+            {% endif %}
+
+        </div>
+
+    </header>
+
+
+    <!-- ============================================= -->
+    <!-- MENSAJES -->
+    <!-- ============================================= -->
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+
+        {% if messages %}
+
+            <section class="messages">
+
+                {% for category, message in messages %}
+
+                    <div class="message {{ category }}">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            </section>
+
+        {% endif %}
+
+    {% endwith %}
+
+
+    <!-- ============================================= -->
+    <!-- RESUMEN -->
+    <!-- ============================================= -->
+
+    <section class="summary-grid">
+
+        <article class="summary-card">
+            <span>Dificultad</span>
+            <strong>{{ difficulty }}</strong>
+            <small>ceros hexadecimales</small>
+        </article>
+
+        <article class="summary-card">
+            <span>Nodos</span>
+            <strong>{{ nodes|length }}</strong>
+            <small>mineros activos</small>
+        </article>
+
+        <article class="summary-card">
+            <span>Altura</span>
+            <strong>{{ chain|length - 1 }}</strong>
+            <small>bloques después del génesis</small>
+        </article>
+
+        <article class="summary-card">
+            <span>Recompensa</span>
+            <strong>{{ reward }}</strong>
+            <small>unidades por bloque</small>
+        </article>
+
+    </section>
+
+
+    <!-- ============================================= -->
+    <!-- TRANSACCIÓN -->
+    <!-- ============================================= -->
+
+    <section class="panel">
+
+        <div class="panel-heading">
+
+            <div>
+                <p class="section-number">01</p>
+                <h2>Crear transacción</h2>
+            </div>
+
+            <span class="pill">
+                Ed25519
+            </span>
+
+        </div>
+
+
+        <form
+            action="/transaccion"
+            method="POST"
+            class="transaction-form"
+        >
+
+            <label>
+                Remitente
+
+                <select name="sender">
+
+                    {% for name in wallets %}
+                        <option value="{{ name }}">
+                            {{ name }}
+                        </option>
+                    {% endfor %}
+
+                </select>
+
+            </label>
+
+
+            <label>
+                Destinatario
+
+                <select name="receiver">
+
+                    {% for name in wallets %}
+                        <option value="{{ name }}">
+                            {{ name }}
+                        </option>
+                    {% endfor %}
+
+                </select>
+
+            </label>
+
+
+            <label>
+                Monto
+
+                <input
+                    type="number"
+                    name="amount"
+                    step="0.01"
+                    value="10"
+                    required
+                >
+            </label>
+
+
+            <label class="wide">
+                Contenido / declaración
+
+                <input
+                    type="text"
+                    name="data"
+                    value="declaración inicial"
+                    placeholder="Ej. declaración inicial"
+                    required
+                >
+            </label>
+
+
+            <button class="primary-button" type="submit">
+                Firmar y enviar
+            </button>
+
+        </form>
+
+
+        <div class="mempool">
+
+            <div>
+                <span>Mempool</span>
+
+                <strong>
+                    {{ mempool|length }}
+                    transacción(es)
+                </strong>
+            </div>
+
+            {% for tx in mempool %}
+
+                <article class="tx">
+
+                    <span class="hash">
+                        {{ tx.tx_id[:20] }}…
+                    </span>
+
+                    <span>
+                        {{ tx.amount }}
+                    </span>
+
+                    <span>
+                        {{ tx.data }}
+                    </span>
+
+                    <span class="tx-valid">
+                        ✓ Firma válida
+                    </span>
+
+                </article>
+
+            {% endfor %}
+
+        </div>
+
+    </section>
+
+
+    <!-- ============================================= -->
+    <!-- NODOS -->
+    <!-- ============================================= -->
+
+    <section class="panel">
+
+        <div class="panel-heading">
+
+            <div>
+                <p class="section-number">02</p>
+                <h2>Carrera de minería</h2>
+            </div>
+
+
+            <form action="/minar" method="POST">
+
+                <button
+                    id="mine-button"
+                    class="mine-button"
+                    type="submit"
+                    {% if mining %}disabled{% endif %}
+                >
+
+                    {% if mining %}
+                        Minando…
+                    {% else %}
+                        Iniciar minería
+                    {% endif %}
+
+                </button>
+
+            </form>
+
+        </div>
+
+
+        <div class="nodes-grid">
+
+            {% for node in nodes %}
+
+                <article
+                    class="node-card"
+                    id="node-{{ node.node_id }}"
+                >
+
+                    <div class="node-top">
+
+                        <div class="node-name">
+                            N{{ loop.index0 }}
+                        </div>
+
+                        <span
+                            class="node-state"
+                            id="node-{{ node.node_id }}-status"
+                        >
+                            {{ stats[node.node_id]["status"] }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="metric">
+
+                        <span>Intentos</span>
+
+                        <strong
+                            id="node-{{ node.node_id }}-attempts"
+                        >
+                            {{ stats[node.node_id]["attempts"] }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="metric">
+
+                        <span>Último hash</span>
+
+                        <code
+                            id="node-{{ node.node_id }}-hash"
+                        >
+                            {% if stats[node.node_id]["last_hash"] %}
+                                {{ stats[node.node_id]["last_hash"][:18] }}…
+                            {% else %}
+                                —
+                            {% endif %}
+                        </code>
+
+                    </div>
+
+
+                    <div class="node-footer">
+
+                        <span>
+                            Recompensa:
+                            <strong
+                                id="node-{{ node.node_id }}-reward"
+                            >
+                                {{ stats[node.node_id]["reward"] }}
+                            </strong>
+                        </span>
+
+                        <span>
+                            altura {{ node.chain|length - 1 }}
+                        </span>
+
+                    </div>
+
+                </article>
+
+            {% endfor %}
+
+        </div>
+
+
+        <div
+            class="winner-box {% if winner %}visible{% endif %}"
+            id="winner-box"
+        >
+
+            {% if winner %}
+                🏆 Nodo {{ winner }} encontró el bloque
+            {% endif %}
+
+        </div>
+
+    </section>
+
+
+    <!-- ============================================= -->
+    <!-- BLOCKCHAIN -->
+    <!-- ============================================= -->
+
+    <section class="panel">
+
+        <div class="panel-heading">
+
+            <div>
+                <p class="section-number">03</p>
+                <h2>Cadena de bloques</h2>
+            </div>
+
+
+            <form
+                action="/alterar"
+                method="POST"
+                onsubmit="
+                    return confirm(
+                        '¿Seguro? Se alterará el bloque 1 del Nodo A para demostrar la validación.'
+                    )
+                "
+            >
+
+                <button class="danger-button" type="submit">
+                    Alterar bloque
+                </button>
+
+            </form>
+
+        </div>
+
+
+        <div class="chain">
+
+            {% for block in chain %}
+
+                <article class="block-card">
+
+                    <div class="block-number">
+
+                        {% if loop.first %}
+                            GÉNESIS
+                        {% else %}
+                            BLOQUE {{ loop.index0 }}
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="block-field">
+                        <span>HASH</span>
+                        <code>{{ block.hash }}</code>
+                    </div>
+
+
+                    <div class="block-field">
+                        <span>HASH ANTERIOR</span>
+                        <code>
+                            {{ block.header.prev_hash }}
+                        </code>
+                    </div>
+
+
+                    <div class="block-row">
+
+                        <div>
+                            <span>NONCE</span>
+                            <strong>
+                                {{ block.header.nonce }}
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>DIFICULTAD</span>
+                            <strong>
+                                {{ block.header.difficulty }}
+                            </strong>
+                        </div>
+
+                        <div>
+                            <span>TX</span>
+                            <strong>
+                                {{ block.transactions|length }}
+                            </strong>
+                        </div>
+
+                    </div>
+
+
+                    {% if not loop.last %}
+
+                        <div class="chain-arrow">
+                            ↓
+                        </div>
+
+                    {% endif %}
+
+                </article>
+
+            {% endfor %}
+
+        </div>
+
+    </section>
+
+
+</div>
+
+
+<script
+    src="{{ url_for('static', filename='app.js') }}"
+></script>
+
+</body>
+
+</html>
