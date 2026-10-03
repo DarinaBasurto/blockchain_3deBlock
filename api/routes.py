@@ -11,6 +11,7 @@ from flask import (
 )
 
 from blockchain.block import Block, BlockHeader
+from blockchain.crypto import sha256_hex
 from blockchain.wallet import Wallet
 from blockchain.transaction import Transaction
 from blockchain.network import Network
@@ -86,6 +87,28 @@ stats_lock = threading.Lock()
 
 
 # =========================================================
+# REGLA ADICIONAL
+# =========================================================
+
+def viola_regla(tx, chain, aceptadas):
+    """Un servidor público solo puede registrar UNA declaración
+    inicial por ejercicio. Regresa True si la transacción la viola."""
+    if tx.data.get("tipo_declaracion") != "inicial":
+        return False
+
+    previas = [
+        t for b in chain[1:] for t in b.transactions
+    ] + aceptadas
+
+    return any(
+        t.sender == tx.sender
+        and t.data.get("tipo_declaracion") == "inicial"
+        and t.data.get("ejercicio") == tx.data.get("ejercicio")
+        for t in previas
+    )
+
+
+# =========================================================
 # MINERÍA
 # =========================================================
 
@@ -106,6 +129,7 @@ def mining_worker(node, node_index, transactions, prev_hash, timestamp):
         timestamp=timestamp,
         difficulty=DIFFICULTY,
         nonce=node_index,
+        miner=node.node_id,
     )
 
     candidate = Block(
@@ -296,7 +320,20 @@ def register_routes(app):
             flash("El monto debe ser numérico.", "error")
             return redirect("/")
 
-        data = request.form.get("data", "")
+        try:
+            ejercicio = int(request.form["ejercicio"])
+        except ValueError:
+            flash("El ejercicio debe ser un año numérico.", "error")
+            return redirect("/")
+
+        data = {
+            "proposito": "declaraciones",
+            "tipo_declaracion": request.form["tipo_declaracion"],
+            "ejercicio": ejercicio,
+            "hash_declaracion": sha256_hex(
+                request.form.get("documento", "")
+            ),
+        }
 
         sender_wallet = wallets[sender_name]
         receiver_wallet = wallets[receiver_name]
@@ -344,6 +381,32 @@ def register_routes(app):
                 "No hay transacciones pendientes para minar.",
                 "warning"
             )
+            return redirect("/")
+
+        # Validamos firma y regla adicional ANTES de lanzar los hilos
+        aceptadas = []
+
+        for tx in list(nodes[0].mempool):
+
+            if not tx.verify():
+                motivo = "firma inválida"
+            elif viola_regla(tx, nodes[0].chain, aceptadas):
+                motivo = (
+                    "ya existe una declaración inicial de ese "
+                    "ejercicio para este servidor público"
+                )
+            else:
+                aceptadas.append(tx)
+                continue
+
+            for n in nodes:
+                n.mempool = [
+                    t for t in n.mempool if t.tx_id != tx.tx_id
+                ]
+
+            flash(f"Transacción rechazada: {motivo}.", "error")
+
+        if not nodes[0].mempool:
             return redirect("/")
 
         # Lanzamos la carrera en segundo plano.
