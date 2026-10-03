@@ -6,13 +6,14 @@ from .transaction import Transaction
 class BlockHeader:
 
     def __init__(self, version, prev_hash, merkle_root,
-                 timestamp, difficulty, nonce):
+                 timestamp, difficulty, nonce, miner=""):
         self.version = version
         self.prev_hash = prev_hash
         self.merkle_root = merkle_root
         self.timestamp = timestamp
         self.difficulty = difficulty
         self.nonce = nonce
+        self.miner = miner
 
     def to_dict(self) -> dict:
         return {
@@ -22,6 +23,7 @@ class BlockHeader:
             "timestamp": self.timestamp,
             "difficulty": self.difficulty,
             "nonce": self.nonce,
+            "miner": self.miner,
         }
 
 

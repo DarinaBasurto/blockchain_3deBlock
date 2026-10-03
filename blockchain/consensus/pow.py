@@ -34,6 +34,10 @@ class ProofOfWork(Consensus):
 
     def validate_block(self, block: Block,
                        chain: list[Block]) -> bool:
+        # 0. Hash guardado = hash recalculado
+        if block.hash != block.compute_hash():
+            return False
+
         # 1. Encadenamiento
         if chain and block.header.prev_hash != chain[-1].hash:
             return False

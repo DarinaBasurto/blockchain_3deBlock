@@ -190,14 +190,36 @@
             </label>
 
 
+            <label>
+                Tipo de declaración
+
+                <select name="tipo_declaracion">
+                    <option value="inicial">inicial</option>
+                    <option value="modificación">modificación</option>
+                    <option value="conclusión">conclusión</option>
+                </select>
+            </label>
+
+
+            <label>
+                Ejercicio (año)
+
+                <input
+                    type="number"
+                    name="ejercicio"
+                    value="2026"
+                    required
+                >
+            </label>
+
+
             <label class="wide">
-                Contenido / declaración
+                Documento (se guarda solo su hash SHA-256)
 
                 <input
                     type="text"
-                    name="data"
-                    value="declaración inicial"
-                    placeholder="Ej. declaración inicial"
+                    name="documento"
+                    value="Declaración de ejemplo"
                     required
                 >
             </label>
