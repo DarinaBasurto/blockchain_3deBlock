@@ -1,0 +1,4 @@
+pytest
+Flask
+Flask-Cors
+cryptography
