@@ -27,11 +27,11 @@ def main():
 
     # 3. Transacciones firmadas
     tx1 = Transaction(alice.direccion(), bob.direccion(), 10,
-                      "declaración inicial")
+                      {"nota": "declaración inicial"})
     tx1.firmar(alice)
 
     tx2 = Transaction(bob.direccion(), alice.direccion(), 3,
-                      "modificación")
+                      {"nota": "modificación"})
     tx2.firmar(bob)
 
     print(f"tx1: {tx1} · firma válida: {tx1.verify()}")

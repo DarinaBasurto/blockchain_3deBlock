@@ -1,8 +1,7 @@
-import hashlib
-import json
 import os
 import threading
 import time
+from blockchain.crypto import sha256_hex, canonical_json
 
 N_NODOS = 4
 CORRIDAS = 10
@@ -10,7 +9,7 @@ DIFICULTADES = [3, 4, 5]
 
 
 def sha256(d):
-    return hashlib.sha256(json.dumps(d, sort_keys=True).encode()).hexdigest()
+    return sha256_hex(canonical_json(d))
 
 
 def minar_una_vez(dificultad):

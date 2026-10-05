@@ -1,5 +1,19 @@
 # AGENTS.md — Documentación técnica para modelos de IA
 
+## Decisiones congeladas (2026-10-05)
+
+1. `canonical_json` ([blockchain/crypto.py](file:///home/sayi/Documents/SEM_9/Blockhain/blockchain_3deBlock/blockchain/crypto.py)) es la ÚNICA serialización utilizada para hashear y firmar. Prohibido usar `json.dumps(..., sort_keys=True)` directamente para hashear o firmar en cualquier parte del código. Los parámetros de `canonical_json` están congelados (`sort_keys=True`, `separators=(",",":")`, `ensure_ascii=False`, codificación UTF-8).
+
+2. `Transaction.data` es SIEMPRE un `dict`, nunca `str`. [run.py](file:///home/sayi/Documents/SEM_9/Blockhain/blockchain_3deBlock/run.py) debe actualizarse en consecuencia. Invariante documentado explícitamente.
+
+3. `tx_id` es determinista a partir de `{sender, receiver, amount, data, timestamp}`. `Transaction.__init__` recibe un parámetro opcional `tx_id`. Si se proporciona, DEBE ser igual a `_hash_payload()` o lanzar `ValueError`. `from_dict` pasa el `tx_id` almacenado para detectar manipulaciones en el momento de la reconstrucción.
+
+4. `ProofOfWork.select_chain()` se conectará en `Node.receive_chain()` (ver Prompt 2, Tarea D). Hasta entonces, no debe eliminarse.
+
+5. `mining_worker()` en [api/routes.py](file:///home/sayi/Documents/SEM_9/Blockhain/blockchain_3deBlock/api/routes.py) omite intencionalmente `Node.mine()` para la carrera de minería. Llama directamente a `node.consensus.validate_block()`. Mantener este comportamiento.
+
+6. Todas las lecturas/escrituras a `mining_state`, `node_stats`, `nodes` y `wallets` en [api/routes.py](file:///home/sayi/Documents/SEM_9/Blockhain/blockchain_3deBlock/api/routes.py) DEBEN estar protegidas por `stats_lock`, `winner_lock` o un nuevo `state_lock`.
+
 ## 1. Resumen del proyecto
 
 Blockchain didáctica con Proof-of-Work, carrera de minería multihilo entre 4 nodos, y UI web Flask para simular declaraciones patrimoniales.

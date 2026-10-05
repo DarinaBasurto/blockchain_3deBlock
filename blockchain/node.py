@@ -107,6 +107,26 @@ class Node:
         ids = {tx.tx_id for tx in block.transactions}
         self.mempool = [t for t in self.mempool if t.tx_id not in ids]
 
+    def receive_chain(self, blocks: list[Block]) -> bool:
+        """
+        Recibe una cadena candidata y la acepta si es más larga y válida.
+        
+        (1) rechaza si len(blocks) <= len(self.chain)
+        (2) valida cada bloque más allá del génesis vía self.consensus.validate_block()
+        (3) al tener éxito reemplaza self.chain y retorna True
+        """
+        if len(blocks) <= len(self.chain):
+            return False
+
+        current_chain = [blocks[0]]
+        for b in blocks[1:]:
+            if not self.consensus.validate_block(b, current_chain):
+                return False
+            current_chain.append(b)
+
+        self.chain = blocks
+        return True
+
     # ---------------- auditoría ----------------
 
     def is_chain_valid(self) -> bool:

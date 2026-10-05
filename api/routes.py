@@ -85,6 +85,9 @@ winner_lock = threading.Lock()
 # Protege las estadísticas que lee Flask
 stats_lock = threading.Lock()
 
+# Protege el estado global general (nodes, wallets, mining_state)
+state_lock = threading.Lock()
+
 
 # =========================================================
 # REGLA ADICIONAL
@@ -174,15 +177,18 @@ def mining_worker(node, node_index, transactions, prev_hash, timestamp):
 
                 # Verificación final usando EL MISMO consenso
                 # que ya desarrolló el proyecto
+                with state_lock:
+                    chain_copy = list(node.chain)
                 if not node.consensus.validate_block(
                     candidate,
-                    node.chain
+                    chain_copy
                 ):
                     return
 
                 # Marcamos ganador ANTES de que otro hilo pueda entrar
-                mining_state["winner"] = node.node_id
-                mining_state["last_block_hash"] = current_hash
+                with state_lock:
+                    mining_state["winner"] = node.node_id
+                    mining_state["last_block_hash"] = current_hash
 
                 with stats_lock:
                     node_stats[node.node_id]["attempts"] = attempts
@@ -195,9 +201,9 @@ def mining_worker(node, node_index, transactions, prev_hash, timestamp):
 
                 # Añade el bloque a este nodo.
                 # receive_block lo difunde por Network a los demás.
-                node.receive_block(candidate)
-
-                mining_state["mining"] = False
+                with state_lock:
+                    node.receive_block(candidate)
+                    mining_state["mining"] = False
 
                 return
 
@@ -219,31 +225,27 @@ def start_mining_race():
 
     stop_event.clear()
 
-    mining_state["mining"] = True
-    mining_state["winner"] = None
-    mining_state["last_block_hash"] = None
+    with state_lock:
+        mining_state["mining"] = True
+        mining_state["winner"] = None
+        mining_state["last_block_hash"] = None
+        source_node = nodes[0]
+        transactions = copy.deepcopy(source_node.mempool)
+        prev_hash = source_node.chain[-1].hash
+        local_nodes = list(nodes)
 
     with stats_lock:
-        for node in nodes:
+        for node in local_nodes:
             node_stats[node.node_id]["attempts"] = 0
             node_stats[node.node_id]["last_hash"] = ""
             node_stats[node.node_id]["status"] = "Preparando"
-
-    # Todos deben competir por EL MISMO bloque lógico.
-    source_node = nodes[0]
-
-    transactions = copy.deepcopy(
-        source_node.mempool
-    )
-
-    prev_hash = source_node.chain[-1].hash
 
     # Misma marca de tiempo para todos.
     timestamp = time.time()
 
     threads = []
 
-    for i, node in enumerate(nodes):
+    for i, node in enumerate(local_nodes):
 
         thread = threading.Thread(
             target=mining_worker,
@@ -265,7 +267,8 @@ def start_mining_race():
     for thread in threads:
         thread.join()
 
-    mining_state["mining"] = False
+    with state_lock:
+        mining_state["mining"] = False
 
 
 # =========================================================
@@ -280,19 +283,29 @@ def register_routes(app):
 
     @app.route("/")
     def index():
+        with state_lock:
+            local_nodes = list(nodes)
+            main_node = nodes[0]
+            chain = list(main_node.chain)
+            mempool = list(main_node.mempool)
+            valid = main_node.is_chain_valid()
+            local_wallets = dict(wallets)
+            is_mining = mining_state["mining"]
+            winner = mining_state["winner"]
 
-        main_node = nodes[0]
+        with stats_lock:
+            local_stats = copy.deepcopy(node_stats)
 
         return render_template(
             "index.html",
-            nodes=nodes,
-            chain=main_node.chain,
-            mempool=main_node.mempool,
-            valid=main_node.is_chain_valid(),
-            wallets=wallets,
-            mining=mining_state["mining"],
-            winner=mining_state["winner"],
-            stats=node_stats,
+            nodes=local_nodes,
+            chain=chain,
+            mempool=mempool,
+            valid=valid,
+            wallets=local_wallets,
+            mining=is_mining,
+            winner=winner,
+            stats=local_stats,
             difficulty=DIFFICULTY,
             reward=REWARD,
         )
@@ -304,7 +317,10 @@ def register_routes(app):
     @app.route("/transaccion", methods=["POST"])
     def create_transaction():
 
-        if mining_state["mining"]:
+        with state_lock:
+            is_mining = mining_state["mining"]
+
+        if is_mining:
             flash(
                 "Espera a que termine la minería antes de crear otra transacción.",
                 "warning"
@@ -335,8 +351,9 @@ def register_routes(app):
             ),
         }
 
-        sender_wallet = wallets[sender_name]
-        receiver_wallet = wallets[receiver_name]
+        with state_lock:
+            sender_wallet = wallets[sender_name]
+            receiver_wallet = wallets[receiver_name]
 
         tx = Transaction(
             sender=sender_wallet.direccion(),
@@ -347,7 +364,8 @@ def register_routes(app):
 
         tx.firmar(sender_wallet)
 
-        accepted = nodes[0].submit_transaction(tx)
+        with state_lock:
+            accepted = nodes[0].submit_transaction(tx)
 
         if accepted:
             flash(
@@ -369,14 +387,18 @@ def register_routes(app):
     @app.route("/minar", methods=["POST"])
     def mine():
 
-        if mining_state["mining"]:
+        with state_lock:
+            is_mining = mining_state["mining"]
+            has_mempool = bool(nodes[0].mempool)
+
+        if is_mining:
             flash(
                 "Ya existe una carrera de minería activa.",
                 "warning"
             )
             return redirect("/")
 
-        if not nodes[0].mempool:
+        if not has_mempool:
             flash(
                 "No hay transacciones pendientes para minar.",
                 "warning"
@@ -386,11 +408,15 @@ def register_routes(app):
         # Validamos firma y regla adicional ANTES de lanzar los hilos
         aceptadas = []
 
-        for tx in list(nodes[0].mempool):
+        with state_lock:
+            mempool_snapshot = list(nodes[0].mempool)
+            chain_snapshot = list(nodes[0].chain)
+
+        for tx in mempool_snapshot:
 
             if not tx.verify():
                 motivo = "firma inválida"
-            elif viola_regla(tx, nodes[0].chain, aceptadas):
+            elif viola_regla(tx, chain_snapshot, aceptadas):
                 motivo = (
                     "ya existe una declaración inicial de ese "
                     "ejercicio para este servidor público"
@@ -399,14 +425,18 @@ def register_routes(app):
                 aceptadas.append(tx)
                 continue
 
-            for n in nodes:
-                n.mempool = [
-                    t for t in n.mempool if t.tx_id != tx.tx_id
-                ]
+            with state_lock:
+                for n in nodes:
+                    n.mempool = [
+                        t for t in n.mempool if t.tx_id != tx.tx_id
+                    ]
 
             flash(f"Transacción rechazada: {motivo}.", "error")
 
-        if not nodes[0].mempool:
+        with state_lock:
+            has_mempool_after = bool(nodes[0].mempool)
+
+        if not has_mempool_after:
             return redirect("/")
 
         # Lanzamos la carrera en segundo plano.
@@ -427,29 +457,41 @@ def register_routes(app):
     @app.route("/estado")
     def status():
 
+        with state_lock:
+            is_mining = mining_state["mining"]
+            winner = mining_state["winner"]
+            last_block_hash = mining_state["last_block_hash"]
+            local_nodes = list(nodes)
+            node_snapshots = [
+                {
+                    "node_id": node.node_id,
+                    "height": len(node.chain),
+                    "mempool": len(node.mempool),
+                    "valid": node.is_chain_valid(),
+                }
+                for node in local_nodes
+            ]
+
         with stats_lock:
-
             node_data = []
-
-            for node in nodes:
-
-                stats = node_stats[node.node_id]
-
+            for ns in node_snapshots:
+                node_id = ns["node_id"]
+                stats = node_stats[node_id]
                 node_data.append({
-                    "id": node.node_id,
+                    "id": node_id,
                     "attempts": stats["attempts"],
                     "last_hash": stats["last_hash"],
                     "status": stats["status"],
                     "reward": stats["reward"],
-                    "height": len(node.chain),
-                    "mempool": len(node.mempool),
-                    "valid": node.is_chain_valid(),
+                    "height": ns["height"],
+                    "mempool": ns["mempool"],
+                    "valid": ns["valid"],
                 })
 
         return jsonify({
-            "mining": mining_state["mining"],
-            "winner": mining_state["winner"],
-            "last_block_hash": mining_state["last_block_hash"],
+            "mining": is_mining,
+            "winner": winner,
+            "last_block_hash": last_block_hash,
             "nodes": node_data,
         })
 
@@ -460,25 +502,29 @@ def register_routes(app):
     @app.route("/alterar", methods=["POST"])
     def tamper():
 
-        if mining_state["mining"]:
+        with state_lock:
+            is_mining = mining_state["mining"]
+
+        if is_mining:
             flash(
                 "No se puede alterar mientras los nodos están minando.",
                 "warning"
             )
             return redirect("/")
 
-        node = nodes[0]
+        with state_lock:
+            node = nodes[0]
+            chain_len = len(node.chain)
+            block = node.chain[1] if chain_len >= 2 else None
 
-        if len(node.chain) < 2:
+        if chain_len < 2:
             flash(
                 "Primero debes minar al menos un bloque.",
                 "warning"
             )
             return redirect("/")
 
-        block = node.chain[1]
-
-        if not block.transactions:
+        if not block or not block.transactions:
             flash(
                 "El bloque no contiene transacciones.",
                 "warning"
@@ -487,7 +533,8 @@ def register_routes(app):
 
         # Alteramos SOLO la copia del Nodo A
         # sin recalcular firma, tx_id, Merkle ni hash.
-        block.transactions[0].amount += 9999
+        with state_lock:
+            block.transactions[0].amount += 9999
 
         flash(
             "Se alteró una transacción del bloque 1 en el Nodo A. "
