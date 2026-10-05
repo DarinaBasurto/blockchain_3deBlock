@@ -4,13 +4,31 @@ import time
 
 
 class Transaction:
-    def __init__(self, sender, receiver, amount, data="", timestamp=None):
+    def __init__(
+        self,
+        sender: str,
+        receiver: str,
+        amount: float,
+        data: dict = None,
+        timestamp: float | None = None,
+        tx_id: str | None = None,
+    ):
+        """
+        Representa una transacción en la blockchain.
+        
+        Invariant:
+        - data debe ser obligatoriamente un diccionario (dict).
+        - Si tx_id es provisto, debe coincidir exactamente con el hash del payload.
+        """
         self.sender = sender
         self.receiver = receiver
         self.amount = amount
-        self.data = data
+        self.data = {} if data is None else data
         self.timestamp = time.time() if timestamp is None else timestamp
-        self.tx_id = self._hash_payload()
+        computed_tx_id = self._hash_payload()
+        if tx_id is not None and tx_id != computed_tx_id:
+            raise ValueError("tx_id mismatch")
+        self.tx_id = computed_tx_id
         self.signature = ""
 
     def _hash_payload(self) -> str:
@@ -46,8 +64,9 @@ class Transaction:
             sender=d["sender"],
             receiver=d["receiver"],
             amount=d["amount"],
-            data=d.get("data", ""),
+            data=d.get("data", {}),
             timestamp=d["timestamp"],
+            tx_id=d.get("tx_id"),
         )
         tx.signature = d.get("signature", "")
         return tx
