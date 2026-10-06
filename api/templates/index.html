@@ -45,16 +45,24 @@
         </div>
 
 
-        <div
-            id="chain-status"
-            class="chain-status {{ 'valid' if valid else 'invalid' }}"
-        >
+        <div class="hero-status">
 
-            {% if valid %}
-                ✓ CADENA VÁLIDA
-            {% else %}
-                ✕ CADENA ALTERADA
-            {% endif %}
+            <div
+                id="chain-status"
+                class="chain-status {{ 'valid' if valid else 'invalid' }}"
+            >
+                {% if valid %}
+                    ✓ CADENA VÁLIDA
+                {% else %}
+                    ✕ CADENA ALTERADA
+                {% endif %}
+            </div>
+
+            <span
+                id="conn-indicator"
+                class="conn"
+                title="Conectado"
+            >●</span>
 
         </div>
 
@@ -62,7 +70,7 @@
 
 
     <!-- ============================================= -->
-    <!-- MENSAJES -->
+    <!-- MENSAJES FLASH -->
     <!-- ============================================= -->
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -87,40 +95,88 @@
 
 
     <!-- ============================================= -->
-    <!-- RESUMEN -->
+    <!-- TOP BAR · CONFIGURACIÓN -->
     <!-- ============================================= -->
 
-    <section class="summary-grid">
+    <section class="panel topbar">
 
-        <article class="summary-card">
-            <span>Dificultad</span>
-            <strong>{{ difficulty }}</strong>
-            <small>ceros hexadecimales</small>
-        </article>
+        <div class="panel-heading">
 
-        <article class="summary-card">
-            <span>Nodos</span>
-            <strong>{{ nodes|length }}</strong>
-            <small>mineros activos</small>
-        </article>
+            <div>
+                <p class="section-number">00</p>
+                <h2>Configuración</h2>
+            </div>
 
-        <article class="summary-card">
-            <span>Altura</span>
-            <strong>{{ chain|length - 1 }}</strong>
-            <small>bloques después del génesis</small>
-        </article>
+        </div>
 
-        <article class="summary-card">
-            <span>Recompensa</span>
-            <strong>{{ reward }}</strong>
-            <small>unidades por bloque</small>
-        </article>
+
+        <div class="config-grid">
+
+            <label>
+                Modo
+
+                <select id="cfg-mode">
+                    <option value="pow">pow</option>
+                    <option value="pos">pos</option>
+                </select>
+            </label>
+
+
+            <label>
+                Nodos (10–20)
+
+                <input
+                    id="cfg-nodes"
+                    type="number"
+                    min="10"
+                    max="20"
+                    step="1"
+                    value="10"
+                >
+            </label>
+
+
+            <label>
+                Dificultad (3–5)
+
+                <input
+                    id="cfg-diff"
+                    type="number"
+                    min="3"
+                    max="5"
+                    step="1"
+                    value="4"
+                >
+            </label>
+
+
+            <button
+                id="cfg-apply"
+                class="primary-button"
+                type="button"
+            >
+                Aplicar
+            </button>
+
+
+            <button
+                id="cfg-reset"
+                class="danger-button"
+                type="button"
+            >
+                Reset
+            </button>
+
+        </div>
+
+
+        <div id="config-error" class="inline-error"></div>
 
     </section>
 
 
     <!-- ============================================= -->
-    <!-- TRANSACCIÓN -->
+    <!-- 01 · TRANSACCIÓN -->
     <!-- ============================================= -->
 
     <section class="panel">
@@ -140,6 +196,7 @@
 
 
         <form
+            id="tx-form"
             action="/transaccion"
             method="POST"
             class="transaction-form"
@@ -148,32 +205,14 @@
             <label>
                 Remitente
 
-                <select name="sender">
-
-                    {% for name in wallets %}
-                        <option value="{{ name }}">
-                            {{ name }}
-                        </option>
-                    {% endfor %}
-
-                </select>
-
+                <select name="sender" id="tx-sender"></select>
             </label>
 
 
             <label>
                 Destinatario
 
-                <select name="receiver">
-
-                    {% for name in wallets %}
-                        <option value="{{ name }}">
-                            {{ name }}
-                        </option>
-                    {% endfor %}
-
-                </select>
-
+                <select name="receiver" id="tx-receiver"></select>
             </label>
 
 
@@ -183,6 +222,7 @@
                 <input
                     type="number"
                     name="amount"
+                    min="0"
                     step="0.01"
                     value="10"
                     required
@@ -195,8 +235,8 @@
 
                 <select name="tipo_declaracion">
                     <option value="inicial">inicial</option>
-                    <option value="modificación">modificación</option>
-                    <option value="conclusión">conclusión</option>
+                    <option value="anual">anual</option>
+                    <option value="final">final</option>
                 </select>
             </label>
 
@@ -214,14 +254,13 @@
 
 
             <label class="wide">
-                Documento (se guarda solo su hash SHA-256)
+                Documento (opcional)
 
-                <input
-                    type="text"
+                <textarea
                     name="documento"
-                    value="Declaración de ejemplo"
-                    required
-                >
+                    rows="2"
+                    placeholder="Se guarda solo su hash SHA-256"
+                ></textarea>
             </label>
 
 
@@ -232,48 +271,15 @@
         </form>
 
 
-        <div class="mempool">
-
-            <div>
-                <span>Mempool</span>
-
-                <strong>
-                    {{ mempool|length }}
-                    transacción(es)
-                </strong>
-            </div>
-
-            {% for tx in mempool %}
-
-                <article class="tx">
-
-                    <span class="hash">
-                        {{ tx.tx_id[:20] }}…
-                    </span>
-
-                    <span>
-                        {{ tx.amount }}
-                    </span>
-
-                    <span>
-                        {{ tx.data }}
-                    </span>
-
-                    <span class="tx-valid">
-                        ✓ Firma válida
-                    </span>
-
-                </article>
-
-            {% endfor %}
-
-        </div>
+        <p class="hint">
+            amount = 0 registra una declaración sin transferencia.
+        </p>
 
     </section>
 
 
     <!-- ============================================= -->
-    <!-- NODOS -->
+    <!-- 02 · NODOS -->
     <!-- ============================================= -->
 
     <section class="panel">
@@ -282,25 +288,18 @@
 
             <div>
                 <p class="section-number">02</p>
-                <h2>Carrera de minería</h2>
+                <h2>Nodos</h2>
             </div>
 
 
-            <form action="/minar" method="POST">
+            <form id="mine-form" action="/minar" method="POST">
 
                 <button
                     id="mine-button"
                     class="mine-button"
                     type="submit"
-                    {% if mining %}disabled{% endif %}
                 >
-
-                    {% if mining %}
-                        Minando…
-                    {% else %}
-                        Iniciar minería
-                    {% endif %}
-
+                    Iniciar minería
                 </button>
 
             </form>
@@ -308,93 +307,27 @@
         </div>
 
 
-        <div class="nodes-grid">
+        <div class="table-wrap">
 
-            {% for node in nodes %}
+            <table class="data-table" id="nodes-table">
 
-                <article
-                    class="node-card"
-                    id="node-{{ node.node_id }}"
-                >
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Intentos</th>
+                        <th>Último hash</th>
+                        <th>Estado</th>
+                        <th>Altura</th>
+                        <th>Mempool</th>
+                        <th>Saldo disp.</th>
+                        <th>Saldo pend.</th>
+                        <th>Válida</th>
+                    </tr>
+                </thead>
 
-                    <div class="node-top">
+                <tbody id="nodes-body"></tbody>
 
-                        <div class="node-name">
-                            N{{ loop.index0 }}
-                        </div>
-
-                        <span
-                            class="node-state"
-                            id="node-{{ node.node_id }}-status"
-                        >
-                            {{ stats[node.node_id]["status"] }}
-                        </span>
-
-                    </div>
-
-
-                    <div class="metric">
-
-                        <span>Intentos</span>
-
-                        <strong
-                            id="node-{{ node.node_id }}-attempts"
-                        >
-                            {{ stats[node.node_id]["attempts"] }}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="metric">
-
-                        <span>Último hash</span>
-
-                        <code
-                            id="node-{{ node.node_id }}-hash"
-                        >
-                            {% if stats[node.node_id]["last_hash"] %}
-                                {{ stats[node.node_id]["last_hash"][:18] }}…
-                            {% else %}
-                                —
-                            {% endif %}
-                        </code>
-
-                    </div>
-
-
-                    <div class="node-footer">
-
-                        <span>
-                            Recompensa:
-                            <strong
-                                id="node-{{ node.node_id }}-reward"
-                            >
-                                {{ stats[node.node_id]["reward"] }}
-                            </strong>
-                        </span>
-
-                        <span>
-                            altura {{ node.chain|length - 1 }}
-                        </span>
-
-                    </div>
-
-                </article>
-
-            {% endfor %}
-
-        </div>
-
-
-        <div
-            class="winner-box {% if winner %}visible{% endif %}"
-            id="winner-box"
-        >
-
-            {% if winner %}
-                🏆 Nodo {{ winner }} encontró el bloque
-            {% endif %}
+            </table>
 
         </div>
 
@@ -402,7 +335,45 @@
 
 
     <!-- ============================================= -->
-    <!-- BLOCKCHAIN -->
+    <!-- 02b · POS PANEL -->
+    <!-- ============================================= -->
+
+    <section class="panel" id="pos-panel" hidden>
+
+        <div class="panel-heading">
+
+            <div>
+                <p class="section-number">02b</p>
+                <h2>Ronda PoS</h2>
+            </div>
+
+            <span class="pill">Proof of Stake</span>
+
+        </div>
+
+
+        <div id="pos-stakes" class="pos-grid"></div>
+
+
+        <button
+            id="pos-run"
+            class="primary-button"
+            type="button"
+        >
+            Iniciar ronda PoS
+        </button>
+
+
+        <div id="pos-error" class="inline-error"></div>
+
+
+        <pre id="pos-output" class="pos-output"></pre>
+
+    </section>
+
+
+    <!-- ============================================= -->
+    <!-- 03 · CADENA -->
     <!-- ============================================= -->
 
     <section class="panel">
@@ -415,15 +386,7 @@
             </div>
 
 
-            <form
-                action="/alterar"
-                method="POST"
-                onsubmit="
-                    return confirm(
-                        '¿Seguro? Se alterará el bloque 1 del Nodo A para demostrar la validación.'
-                    )
-                "
-            >
+            <form id="alter-form" action="/alterar" method="POST">
 
                 <button class="danger-button" type="submit">
                     Alterar bloque
@@ -434,76 +397,82 @@
         </div>
 
 
-        <div class="chain">
+        <div class="table-wrap">
 
-            {% for block in chain %}
+            <table class="data-table" id="chain-table">
 
-                <article class="block-card">
+                <thead>
+                    <tr>
+                        <th>Altura</th>
+                        <th>Hash</th>
+                        <th>Prev hash</th>
+                        <th>Minero</th>
+                        <th>Txs</th>
+                    </tr>
+                </thead>
 
-                    <div class="block-number">
+                <tbody id="chain-body">
 
-                        {% if loop.first %}
-                            GÉNESIS
-                        {% else %}
-                            BLOQUE {{ loop.index0 }}
-                        {% endif %}
+                    {% for block in chain %}
 
-                    </div>
+                        <tr>
+                            <td>
+                                {% if loop.first %}
+                                    GÉNESIS
+                                {% else %}
+                                    {{ loop.index0 }}
+                                {% endif %}
+                            </td>
 
+                            <td>
+                                <code>{{ block.hash[:8] }}…</code>
+                            </td>
 
-                    <div class="block-field">
-                        <span>HASH</span>
-                        <code>{{ block.hash }}</code>
-                    </div>
+                            <td>
+                                <code>
+                                    {{ block.header.prev_hash[:8] }}…
+                                </code>
+                            </td>
 
+                            <td>
+                                {{ block.header.miner or "—" }}
+                            </td>
 
-                    <div class="block-field">
-                        <span>HASH ANTERIOR</span>
-                        <code>
-                            {{ block.header.prev_hash }}
-                        </code>
-                    </div>
-
-
-                    <div class="block-row">
-
-                        <div>
-                            <span>NONCE</span>
-                            <strong>
-                                {{ block.header.nonce }}
-                            </strong>
-                        </div>
-
-                        <div>
-                            <span>DIFICULTAD</span>
-                            <strong>
-                                {{ block.header.difficulty }}
-                            </strong>
-                        </div>
-
-                        <div>
-                            <span>TX</span>
-                            <strong>
+                            <td>
                                 {{ block.transactions|length }}
-                            </strong>
-                        </div>
+                            </td>
+                        </tr>
 
-                    </div>
+                    {% endfor %}
 
+                </tbody>
 
-                    {% if not loop.last %}
-
-                        <div class="chain-arrow">
-                            ↓
-                        </div>
-
-                    {% endif %}
-
-                </article>
-
-            {% endfor %}
+            </table>
 
         </div>
+
+    </section>
+
+
+    <!-- ============================================= -->
+    <!-- 04 · BITÁCORA -->
+    <!-- ============================================= -->
+
+    <section class="panel">
+
+        <div class="panel-heading">
+
+            <div>
+                <p class="section-number">04</p>
+                <h2>Bitácora</h2>
+            </div>
+
+            <span class="pill">últimos 30 eventos</span>
+
+        </div>
+
+
+        <div id="log-list" class="log-list"></div>
 
     </section>
 
