@@ -67,3 +67,16 @@ class ProofOfWork(Consensus):
                      candidates: list[list[Block]]) -> list[Block]:
         # Didáctico: cadena más larga
         return max(candidates, key=len)
+
+
+def pick_winner(candidates: list[tuple]) -> tuple | None:
+    """Return the (node, block) pair with the lexicographically
+    smallest block.hash. Returns None if candidates is empty.
+
+    Tie-break rule for PoW: when two miners find a valid nonce in
+    the same round, the smaller hash wins. Deterministic and
+    reproducible across nodes.
+    """
+    if not candidates:
+        return None
+    return min(candidates, key=lambda pair: pair[1].hash)

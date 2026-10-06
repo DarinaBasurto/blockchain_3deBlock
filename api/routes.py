@@ -16,7 +16,7 @@ from blockchain.wallet import Wallet
 from blockchain.transaction import Transaction
 from blockchain.network import Network
 from blockchain.node import Node
-from blockchain.consensus.pow import ProofOfWork
+from blockchain.consensus.pow import ProofOfWork, pick_winner
 
 
 from blockchain.consensus.pos import PoSRound, Validator
@@ -33,6 +33,7 @@ NUM_NODES = 4
 
 CONFIG = {"num_nodes": 10, "difficulty": 4, "mode": "pow"}
 events = []  # max 200, protected by state_lock
+candidates: list = []  # reset at start of each mining round
 
 
 # Evita que dos nodos se proclamen ganadores
@@ -225,6 +226,15 @@ def mining_worker(node, node_index, transactions, prev_hash, timestamp):
                     mining_state["winner"] = node.node_id
                     mining_state["last_block_hash"] = current_hash
 
+                # Registramos el candidato y aplicamos la regla de desempate
+                # determinista (hash lexicográficamente menor). En la
+                # práctica el simulador usa first-wins: solo un worker entra
+                # antes de que los demás vean stop_event, así que candidates
+                # suele tener tamaño 1. Se llama igual para dejar la regla
+                # codificada y testeable de forma aislada.
+                candidates.append((node, candidate))
+                winner_node, winner_block = pick_winner(candidates)
+
                 with stats_lock:
                     node_stats[node.node_id]["attempts"] = attempts
                     node_stats[node.node_id]["last_hash"] = current_hash
@@ -237,8 +247,10 @@ def mining_worker(node, node_index, transactions, prev_hash, timestamp):
                 # Añade el bloque a este nodo.
                 # receive_block lo difunde por Network a los demás.
                 with state_lock:
-                    node.receive_block(candidate)
+                    winner_node.receive_block(winner_block)
                     mining_state["mining"] = False
+                    mining_state["winner"] = winner_node.node_id
+                    mining_state["last_block_hash"] = winner_block.hash
 
                 return
 
@@ -261,6 +273,7 @@ def start_mining_race():
     stop_event.clear()
 
     with state_lock:
+        candidates.clear()
         mining_state["mining"] = True
         mining_state["winner"] = None
         mining_state["last_block_hash"] = None

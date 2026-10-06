@@ -7,12 +7,15 @@ import pytest
 from blockchain.ledger import compute_balances, available_of, REWARD
 
 
-@pytest.mark.xfail(reason="pick_winner() not yet in repo")
 def test_pow_two_winners_tie_breaking(fresh_network):
     """POW-01: dos ganadores en la misma ronda (desempate por hash menor)."""
-    network = fresh_network()
-    # Requiere función de desempate determinista todavía inexistente
-    assert hasattr(network.nodes["N0"], "pick_winner")
+    from blockchain.consensus.pow import pick_winner
+
+    a = SimpleNamespace(hash="0000abc")
+    b = SimpleNamespace(hash="0000123")
+    assert pick_winner([(None, a), (None, b)])[1].hash == "0000123"
+    assert pick_winner([(None, a)])[1].hash == "0000abc"
+    assert pick_winner([]) is None
 
 
 @pytest.mark.xfail(reason="state_lock and /minar guards not yet in repo")

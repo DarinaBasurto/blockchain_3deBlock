@@ -16,6 +16,8 @@
 
 7. Balance and double-spend checks apply ONLY to transactions with amount > 0. Transactions with amount == 0 are treated as pure registry entries (declaraciones) and are exempt, matching the guide's intent that the 'saldo suficiente' rule is purpose-specific to the 'Moneda' use case.
 
+8. PoW tie-break: candidates are compared via `blockchain.consensus.pow.pick_winner()`, which returns the pair with the lexicographically smallest `block.hash`. In practice the simulator uses a first-wins strategy (the first worker to acquire `winner_lock` appends its candidate and sets `stop_event`); `pick_winner()` is called with the current candidate list so the rule is encoded and testable in isolation. A true simultaneous-arrival grace window was considered and rejected as unnecessarily fragile for a didactic simulator.
+
 ## 1. Resumen del proyecto
 
 Blockchain didáctica con Proof-of-Work, carrera de minería multihilo entre 4 nodos, y UI web Flask para simular declaraciones patrimoniales.
