@@ -76,10 +76,12 @@ def chain_with_n_blocks():
         sender = Wallet()
         receiver = Wallet()
         for i in range(n):
+            # amount=0: this is a "registro" declaration, not a monetary transfer,
+            # so it does not require the sender to have a balance (see AGENTS.md).
             tx = Transaction(
                 sender.direccion(),
                 receiver.direccion(),
-                1.0,
+                0.0,
                 {"i": i, "tipo_declaracion": "inicial", "ejercicio": 2024},
             )
             tx.firmar(sender)

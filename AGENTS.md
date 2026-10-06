@@ -14,6 +14,8 @@
 
 6. Todas las lecturas/escrituras a `mining_state`, `node_stats`, `nodes` y `wallets` en [api/routes.py](file:///home/sayi/Documents/SEM_9/Blockhain/blockchain_3deBlock/api/routes.py) DEBEN estar protegidas por `stats_lock`, `winner_lock` o un nuevo `state_lock`.
 
+7. Balance and double-spend checks apply ONLY to transactions with amount > 0. Transactions with amount == 0 are treated as pure registry entries (declaraciones) and are exempt, matching the guide's intent that the 'saldo suficiente' rule is purpose-specific to the 'Moneda' use case.
+
 ## 1. Resumen del proyecto
 
 Blockchain didáctica con Proof-of-Work, carrera de minería multihilo entre 4 nodos, y UI web Flask para simular declaraciones patrimoniales.

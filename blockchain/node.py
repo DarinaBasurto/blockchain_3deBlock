@@ -4,6 +4,8 @@ from .transaction import Transaction
 from .consensus.base import Consensus
 from .wallet import verificar_firma
 
+from blockchain.ledger import compute_balances, available_of
+
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .network import Network
@@ -26,6 +28,18 @@ class Node:
         self.chain: list[Block] = [self._genesis()]
         self.mempool: list[Transaction] = []
 
+    # ---------------- saldos ----------------
+
+    def balance_of(self, address: str) -> float:
+        return available_of(address, self.chain)
+
+    def pending_of(self, address: str) -> float:
+        entry = compute_balances(self.chain).get(address)
+        return entry["pending"] if entry else 0.0
+
+    def can_spend(self, address: str, amount: float) -> bool:
+        return amount > 0 and self.balance_of(address) >= amount
+
     # ---------------- génesis ----------------
 
     def _genesis(self) -> Block:
@@ -45,6 +59,10 @@ class Node:
         """Un cliente envía una transacción al nodo."""
         if not self._valid_transaction(tx):
             return False
+        if tx.amount > 0:
+            pending_out = sum(t.amount for t in self.mempool if t.sender == tx.sender)
+            if pending_out + tx.amount > self.balance_of(tx.sender):
+                return False
         self.mempool.append(tx)
         if self.network:
             self.network.broadcast_tx(self.node_id, tx)
@@ -63,11 +81,24 @@ class Node:
             return False
         if any(t.tx_id == tx.tx_id for t in self.mempool):
             return False
+        if tx.amount > 0 and not self.can_spend(tx.sender, tx.amount):
+            return False
         return True
 
     # ---------------- minado ----------------
 
     def mine(self) -> Block | None:
+        accepted = []
+        debits = {}
+        for tx in self.mempool:
+            if tx.amount > 0:
+                prev = debits.get(tx.sender, 0.0)
+                if prev + tx.amount > self.balance_of(tx.sender):
+                    continue  # drop overspending tx
+                debits[tx.sender] = prev + tx.amount
+            accepted.append(tx)
+        self.mempool = accepted
+
         if not self.mempool:
             return None
 
