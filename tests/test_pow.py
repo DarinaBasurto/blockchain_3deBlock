@@ -12,7 +12,7 @@ def test_pow_two_winners_tie_breaking(fresh_network):
     """POW-01: dos ganadores en la misma ronda (desempate por hash menor)."""
     network = fresh_network()
     # Requiere función de desempate determinista todavía inexistente
-    assert hasattr(network.nodes["A"], "pick_winner")
+    assert hasattr(network.nodes["N0"], "pick_winner")
 
 
 @pytest.mark.xfail(reason="state_lock and /minar guards not yet in repo")
@@ -27,7 +27,7 @@ def test_concurrent_mining_request_rejected(flask_client):
 def test_pow_timeout_or_cancellation(fresh_network):
     """POW-03: dificultad excesiva → cancelación por stop_event o límite de rondas."""
     network = fresh_network()
-    node = network.nodes["A"]
+    node = network.nodes["N0"]
     # Requiere un worker de minado cancelable
     assert hasattr(node.consensus, "stop_event")
 
@@ -70,6 +70,6 @@ def test_available_of_unknown_address():
 def test_fake_reward_amount_rejected(fresh_network):
     """POW-05: recompensa falsa (monto distinto al establecido) es rechazada."""
     network = fresh_network()
-    node = network.nodes["A"]
+    node = network.nodes["N0"]
     # No existe concepto de coinbase en el core actual
     assert hasattr(node.consensus, "validate_reward")

@@ -9,7 +9,7 @@ from blockchain.consensus.pow import ProofOfWork
 def test_mine_empty_mempool(fresh_network):
     """TX-07: intentar minar con mempool vacía devuelve None y no altera la cadena."""
     network = fresh_network()
-    node = network.nodes["A"]
+    node = network.nodes["N0"]
     assert len(node.mempool) == 0
     height_before = len(node.chain)
 
@@ -22,7 +22,7 @@ def test_mine_empty_mempool(fresh_network):
 def test_receive_shorter_or_invalid_chain(fresh_network, chain_with_n_blocks):
     """CH-02: cadena recibida más corta es rechazada; la cadena local se conserva."""
     network = fresh_network()
-    node_a = network.nodes["A"]
+    node_a = network.nodes["N0"]
     chain_with_n_blocks(node_a, 5)
     assert len(node_a.chain) >= 4
     local_height = len(node_a.chain)
@@ -41,7 +41,7 @@ def test_tamper_intermediate_block_invalidates_chain(
 ):
     """CH-03: manipular un bloque intermedio invalida la cadena completa."""
     network = fresh_network()
-    node = network.nodes["A"]
+    node = network.nodes["N0"]
     chain_with_n_blocks(node, 4)
     assert node.is_chain_valid() is True
 
