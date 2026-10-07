@@ -118,6 +118,19 @@ body {
     text-rendering: optimizeLegibility;
 }
 
+/* CSS-only noise texture (SVG data URI) breaks the flat dark field. */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+    opacity: .02;
+    pointer-events: none;
+}
+
 h1,
 h2,
 h3 {
@@ -151,10 +164,15 @@ code,
 }
 
 .page {
+    position: relative;
+    z-index: 1;
+
     width: min(1400px, 94%);
     margin: 0 auto;
     padding: var(--space-7) 0 90px;
 }
+
+/* Brand block — brand + mode chip own visual block, accent line underneath */
 
 .hero {
     display: flex;
@@ -162,7 +180,51 @@ code,
     justify-content: space-between;
     gap: 30px;
 
-    margin-bottom: 35px;
+    position: relative;
+
+    padding: var(--space-5) var(--space-6) var(--space-6);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+
+    background: rgba(17, 24, 39, .55);
+    box-shadow: var(--shadow-card);
+
+    margin-bottom: 24px;
+}
+
+.hero::after {
+    content: "";
+    position: absolute;
+    left: var(--space-6);
+    right: var(--space-6);
+    bottom: -1px;
+    height: 2px;
+
+    background: linear-gradient(
+        90deg,
+        var(--accent) 0,
+        var(--accent-2) 34%,
+        transparent 78%
+    );
+
+    opacity: .8;
+}
+
+.mode-chip {
+    padding: 6px 11px;
+
+    border: 1px solid rgba(113, 167, 255, .35);
+    border-radius: var(--radius-pill);
+
+    background: #16233a;
+    color: var(--accent);
+
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
 }
 
 .hero-status {
@@ -283,6 +345,88 @@ h1 span {
     margin: 20px 0;
 }
 
+
+/* ----------------------------------------------------- */
+/* STATS STRIP                                           */
+/* ----------------------------------------------------- */
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+
+    gap: 12px;
+
+    margin: 20px 0;
+}
+
+.stat {
+    min-width: 0;
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-base);
+
+    padding: 14px 16px;
+
+    background: rgba(17, 24, 39, .6);
+    box-shadow: var(--shadow-card);
+}
+
+.stat-label {
+    display: block;
+
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.stat strong {
+    display: block;
+    margin-top: 6px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-family: var(--font-display);
+    font-size: 24px;
+    letter-spacing: -.02em;
+}
+
+
+/* ----------------------------------------------------- */
+/* SECTION SEPARATOR                                     */
+/* ----------------------------------------------------- */
+
+.section-sep {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+
+    margin: var(--space-6) 0 var(--space-4);
+}
+
+.section-sep::before,
+.section-sep::after {
+    content: "";
+    flex: 1 1 auto;
+    height: 1px;
+
+    background: rgba(255, 255, 255, .06);
+}
+
+.section-sep span {
+    color: var(--muted);
+
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
 .panel-heading {
     display: flex;
     justify-content: space-between;
@@ -293,13 +437,25 @@ h1 span {
 }
 
 .section-number {
-    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 34px;
+    height: 30px;
+    padding: 0 7px;
+    margin: 0 0 6px;
+
+    border: 1px solid rgba(113, 167, 255, .45);
+    border-radius: 9px;
+
+    background: rgba(113, 167, 255, .07);
     color: var(--accent);
 
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: 16px;
     font-weight: 700;
-    letter-spacing: .15em;
+    letter-spacing: .04em;
 }
 
 .pill {
@@ -368,6 +524,69 @@ h1 span {
 
 .config-grid .field-label {
     flex: 0 0 auto;
+}
+
+
+/* ----------------------------------------------------- */
+/* 01 · TRANSACTION LAYOUT (60 / 40)                     */
+/* ----------------------------------------------------- */
+
+.tx-layout {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    align-items: start;
+
+    gap: 20px;
+}
+
+.tx-layout .panel {
+    margin: 0;
+}
+
+.mini-panel {
+    position: sticky;
+    top: 24px;
+}
+
+.mini-list {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+}
+
+.mini-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-3);
+
+    padding: 10px 0;
+
+    border-bottom: 1px solid var(--hairline);
+}
+
+.mini-row:last-child {
+    border-bottom: 0;
+}
+
+.mini-row dt {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.mini-row dd {
+    margin: 0;
+    min-width: 0;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 13px;
+    text-align: right;
 }
 
 
@@ -1310,6 +1529,18 @@ button:disabled {
     .transaction-form {
         grid-template-columns: 1fr 1fr;
     }
+
+    .stats-row {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .tx-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .mini-panel {
+        position: static;
+    }
 }
 
 
@@ -1319,6 +1550,23 @@ button:disabled {
     .panel-heading {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .hero {
+        padding: var(--space-5);
+    }
+
+    .hero::after {
+        left: var(--space-5);
+        right: var(--space-5);
+    }
+
+    .stats-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .section-sep {
+        margin: var(--space-5) 0 var(--space-3);
     }
 
     .hero-status {

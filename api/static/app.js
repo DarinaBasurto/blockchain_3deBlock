@@ -534,6 +534,71 @@ function renderCompactNodes(nodes, winner) {
 // ESTADO · APLICAR
 // -----------------------------------------------------
 
+// -----------------------------------------------------
+// RENDER · STATS STRIP + MINI PANEL
+// -----------------------------------------------------
+
+function setText(id, value) {
+
+    const el = $(id);
+
+    if (el) {
+        el.textContent = value == null ? "—" : String(value);
+    }
+}
+
+
+function updateStats(data, cfg) {
+
+    const nodes = data.nodes || [];
+
+    const height = nodes.reduce(
+        (max, n) => Math.max(max, Number(n.height) || 0),
+        0
+    );
+
+    const mempool = nodes.reduce(
+        (sum, n) => sum + (Number(n.mempool) || 0),
+        0
+    );
+
+    setText("stat-height", height);
+    setText("stat-nodes", cfg.num_nodes != null ? cfg.num_nodes : nodes.length);
+    setText("stat-difficulty", cfg.difficulty != null ? cfg.difficulty : "—");
+    setText("stat-mode", (cfg.mode || "pow").toUpperCase());
+    setText("stat-mempool", mempool);
+    setText(
+        "stat-winner",
+        data.winner || (data.mining ? "…" : "—")
+    );
+}
+
+
+function updateMiniPanel(data, cfg) {
+
+    const connEl = $("conn-indicator");
+    const online = connEl
+        ? connEl.classList.contains("online")
+        : navigator.onLine;
+
+    setText("mini-conn", online ? "en línea" : "sin conexión");
+
+    const valid = document
+        .getElementById("chain-status")
+        ?.classList.contains("valid");
+
+    setText("mini-chain", valid ? "válida" : "alterada");
+
+    setText(
+        "mini-lastblock",
+        data.last_block_hash ? fmtHash(data.last_block_hash) : "—"
+    );
+
+    setText("mini-winner", data.winner || "—");
+    setText("mini-mining", data.mining ? "minando" : "detenida");
+}
+
+
 function applyEstado(data) {
 
     const cfg = data.config || {};
@@ -575,6 +640,15 @@ function applyEstado(data) {
     renderCompactNodes(data.nodes || [], data.winner);
     renderLog(data.log || []);
     renderConstellation(data.nodes || [], data.winner);
+
+    updateStats(data, cfg);
+    updateMiniPanel(data, cfg);
+
+    const modeChip = $("mode-chip");
+
+    if (modeChip) {
+        modeChip.textContent = cfg.mode || "pow";
+    }
 
     const button = $("mine-button");
 

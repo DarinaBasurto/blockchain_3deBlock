@@ -27,7 +27,7 @@
     <!-- HEADER -->
     <!-- ============================================= -->
 
-    <header class="hero">
+    <header class="hero brand-block">
 
         <div>
             <p class="eyebrow">
@@ -47,6 +47,8 @@
 
 
         <div class="hero-status">
+
+            <span id="mode-chip" class="mode-chip">pow</span>
 
             <div
                 id="chain-status"
@@ -179,10 +181,54 @@
 
 
     <!-- ============================================= -->
+    <!-- STATS STRIP -->
+    <!-- ============================================= -->
+
+    <div class="stats-row" id="stats-row">
+
+        <div class="stat">
+            <span class="stat-label">Altura</span>
+            <strong id="stat-height">—</strong>
+        </div>
+
+        <div class="stat">
+            <span class="stat-label">Nodos</span>
+            <strong id="stat-nodes">—</strong>
+        </div>
+
+        <div class="stat">
+            <span class="stat-label">Dificultad</span>
+            <strong id="stat-difficulty">—</strong>
+        </div>
+
+        <div class="stat">
+            <span class="stat-label">Modo</span>
+            <strong id="stat-mode">—</strong>
+        </div>
+
+        <div class="stat">
+            <span class="stat-label">Mempool</span>
+            <strong id="stat-mempool">—</strong>
+        </div>
+
+        <div class="stat">
+            <span class="stat-label">Ganador</span>
+            <strong id="stat-winner">—</strong>
+        </div>
+
+    </div>
+
+
+    <div class="section-sep"><span>Declaración</span></div>
+
+
+    <!-- ============================================= -->
     <!-- 01 · TRANSACCIÓN -->
     <!-- ============================================= -->
 
-    <section class="panel">
+    <div class="tx-layout">
+
+    <section class="panel tx-panel">
 
         <div class="panel-heading">
 
@@ -308,6 +354,50 @@
         </p>
 
     </section>
+
+
+    <aside class="panel mini-panel" id="mini-panel">
+
+        <div class="card-head">
+            <span class="card-label">Estado de red</span>
+            <span class="card-meta">live</span>
+        </div>
+
+        <dl class="mini-list">
+
+            <div class="mini-row">
+                <dt>Conexión</dt>
+                <dd id="mini-conn">—</dd>
+            </div>
+
+            <div class="mini-row">
+                <dt>Cadena</dt>
+                <dd id="mini-chain">—</dd>
+            </div>
+
+            <div class="mini-row">
+                <dt>Último bloque</dt>
+                <dd id="mini-lastblock" class="hash">—</dd>
+            </div>
+
+            <div class="mini-row">
+                <dt>Ganador</dt>
+                <dd id="mini-winner">—</dd>
+            </div>
+
+            <div class="mini-row">
+                <dt>Minería</dt>
+                <dd id="mini-mining">—</dd>
+            </div>
+
+        </dl>
+
+    </aside>
+
+    </div>
+
+
+    <div class="section-sep"><span>Red</span></div>
 
 
     <!-- ============================================= -->
@@ -464,6 +554,9 @@
         <pre id="pos-output" class="pos-output"></pre>
 
     </section>
+
+
+    <div class="section-sep"><span>Cadena</span></div>
 
 
     <!-- ============================================= -->
@@ -642,6 +735,9 @@
         </div>
 
     </section>
+
+
+    <div class="section-sep"><span>Bitácora</span></div>
 
 
     <!-- ============================================= -->
