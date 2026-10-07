@@ -7,3 +7,5 @@ env
 __pycache__/
 *.pyc
 '@ | Set-Content .gitignore -Encoding ascii
+
+node_modules/
