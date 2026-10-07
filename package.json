@@ -4,12 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "bun run build:vendor && bun run build:fonts",
+    "build": "bun run build:vendor && bun run build:fonts && bun run build:icons",
     "build:vendor": "mkdir -p api/static/vendor && bun build node_modules/uplot/dist/uPlot.esm.js --outfile api/static/vendor/uplot.js --format esm --minify && bun build node_modules/@formkit/auto-animate/index.mjs --outfile api/static/vendor/auto-animate.js --format esm --minify && cp node_modules/uplot/dist/uPlot.min.css api/static/vendor/uplot.css",
-    "build:fonts": "mkdir -p api/static/fonts && cp node_modules/@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2 node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2 node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2 api/static/fonts/"
+    "build:fonts": "mkdir -p api/static/fonts && cp node_modules/@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2 node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2 node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2 api/static/fonts/",
+    "build:icons": "mkdir -p api/static/icons && cp node_modules/lucide-static/icons/{settings,file-text,send,lock,cpu,pickaxe,crown,circle-dot,link,arrow-right,copy,rotate-ccw,triangle-alert,circle-check,clock,chevron-down,info,check}.svg api/static/icons/"
   },
   "dependencies": {
     "@formkit/auto-animate": "^0.10.0",
+    "lucide-static": "^1.52.0",
     "uplot": "^1.6.32"
   },
   "devDependencies": {

@@ -1,6 +1,10 @@
 /* =========================================================
    3deBlock · PoW Lab — design system
-   Palette + typography + motion defined in STEP 0.
+   Two-layer token convention:
+     ─── Layer 1: raw palette (do not rename) ───
+     ─── Layer 2: semantic roles (retheme here) ───
+   Components must reference Layer 2 whenever a meaning applies,
+   so a restyle is one line per role instead of a file-wide hunt.
    ========================================================= */
 
 /* Self-hosted fonts (no CDN). Files live in api/static/fonts/ and are copied
@@ -87,6 +91,28 @@
         0 0 24px rgba(113, 167, 255, .16);
 
     --ease: cubic-bezier(.2, .7, .2, 1);
+}
+
+
+/* ----------------------------------------------------- */
+/* LAYER 2 · SEMANTIC ROLES                              */
+/* Map raw -> meaning. Retheme a concept here, once.     */
+/* ----------------------------------------------------- */
+
+:root {
+    --role-network-link: rgba(113, 167, 255, .18);
+    --role-network-link-hot: var(--accent);
+    --role-node-idle: var(--muted);
+    --role-node-mining: var(--warning);
+    --role-node-won: var(--success);
+    --role-block-genesis: var(--accent-2);
+    --role-block-valid: var(--border);
+    --role-block-invalid: var(--danger);
+    --role-block-tip: var(--accent);
+    --role-balance-available: var(--success);
+    --role-balance-pending: var(--warning);
+    --role-badge-seal: var(--accent-2);
+    --role-hairline: rgba(255, 255, 255, .06);
 }
 
 
@@ -413,7 +439,7 @@ h1 span {
     flex: 1 1 auto;
     height: 1px;
 
-    background: rgba(255, 255, 255, .06);
+    background: var(--role-hairline);
 }
 
 .section-sep span {
@@ -425,6 +451,126 @@ h1 span {
     letter-spacing: .22em;
     text-transform: uppercase;
     white-space: nowrap;
+}
+
+
+/* ----------------------------------------------------- */
+/* ICONS · MICROCOPY · TOOLTIP AFFORDANCE                */
+/* All icons are Lucide, inlined with the project rules  */
+/* (stroke currentColor, width 1.75, round caps/joins).  */
+/* ----------------------------------------------------- */
+
+.head-icon {
+    width: 18px;
+    height: 18px;
+
+    margin-right: 9px;
+
+    vertical-align: -3px;
+
+    color: var(--accent);
+}
+
+.stat-icon {
+    width: 12px;
+    height: 12px;
+
+    margin-right: 5px;
+
+    vertical-align: -2px;
+
+    color: var(--muted);
+}
+
+.tip-icon {
+    width: 12px;
+    height: 12px;
+
+    margin-left: 4px;
+
+    vertical-align: -2px;
+
+    color: var(--muted);
+}
+
+.badge-icon {
+    width: 11px;
+    height: 11px;
+
+    margin-right: 4px;
+
+    vertical-align: -1px;
+
+    color: var(--role-block-genesis);
+}
+
+.field-icon {
+    width: 11px;
+    height: 11px;
+
+    margin-right: 4px;
+
+    vertical-align: -1px;
+
+    color: var(--muted);
+}
+
+.copy-icon {
+    width: 11px;
+    height: 11px;
+
+    margin-left: 5px;
+
+    vertical-align: -1px;
+
+    opacity: .55;
+}
+
+.hash:hover .copy-icon {
+    opacity: 1;
+}
+
+/* Microcopy helper line under a panel / card title */
+
+.card-sub {
+    margin: -14px 0 20px;
+
+    max-width: 68ch;
+
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.constellation-card .card-sub {
+    margin: var(--space-3) 0 0;
+}
+
+.nodes-visual > .card-sub {
+    margin: var(--space-3) 0 0;
+}
+
+.card-sub.mono {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: -.01em;
+}
+
+/* Native-tooltip affordance for elements carrying a title */
+
+.has-tip {
+    cursor: help;
+    text-decoration: underline dotted rgba(143, 160, 184, .5);
+    text-underline-offset: 3px;
+}
+
+.chain-status .status-icon {
+    width: 14px;
+    height: 14px;
+
+    margin-right: 6px;
+
+    vertical-align: -2px;
 }
 
 .panel-heading {
@@ -441,13 +587,13 @@ h1 span {
     align-items: center;
     justify-content: center;
 
-    min-width: 34px;
+    min-width: 30px;
     height: 30px;
-    padding: 0 7px;
+    padding: 0 6px;
     margin: 0 0 6px;
 
     border: 1px solid rgba(113, 167, 255, .45);
-    border-radius: 9px;
+    border-radius: 8px;
 
     background: rgba(113, 167, 255, .07);
     color: var(--accent);
@@ -524,6 +670,31 @@ h1 span {
 
 .config-grid .field-label {
     flex: 0 0 auto;
+}
+
+/* Control strip: label above the control, mono value */
+
+.control-strip .field {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+}
+
+.control-strip .field-label {
+    flex: 0 0 auto;
+
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.control-strip select,
+.control-strip input {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: -.01em;
 }
 
 
@@ -822,7 +993,7 @@ button:disabled {
     border-radius: 9px 3px 9px 3px;
 
     background: #16233a;
-    color: var(--accent);
+    color: var(--role-badge-seal);
 
     padding: 5px 9px;
 
@@ -875,37 +1046,37 @@ button:disabled {
 }
 
 .link {
-    stroke: rgba(143, 160, 184, .16);
+    stroke: var(--role-network-link);
     stroke-width: 1;
 }
 
 .link--active {
-    stroke: var(--accent);
+    stroke: var(--role-network-link-hot);
     stroke-width: 2.5;
     opacity: .9;
 }
 
 .node-ring {
     fill: #0c1320;
-    stroke: var(--border);
+    stroke: var(--role-node-idle);
     stroke-width: 2;
     transition: stroke .2s var(--ease), stroke-width .2s var(--ease);
 }
 
 .node-halo {
     fill: none;
-    stroke: var(--success);
+    stroke: var(--role-node-won);
     stroke-width: 1.5;
     opacity: 0;
 }
 
 .node--mining .node-ring {
-    stroke: var(--warning);
+    stroke: var(--role-node-mining);
     animation: node-pulse 1.1s ease-in-out infinite;
 }
 
 .node--won .node-ring {
-    stroke: var(--success);
+    stroke: var(--role-node-won);
     stroke-width: 3;
 }
 
@@ -993,7 +1164,17 @@ button:disabled {
 }
 
 .compact-table tr.winner-row {
-    box-shadow: inset 3px 0 0 var(--success);
+    box-shadow: inset 3px 0 0 var(--role-node-won);
+}
+
+.compact-table tbody td:nth-child(5) {
+    color: var(--role-balance-available);
+    font-family: var(--font-mono);
+}
+
+.compact-table tbody td:nth-child(6) {
+    color: var(--role-balance-pending);
+    font-family: var(--font-mono);
 }
 
 .node-cell {
@@ -1006,7 +1187,33 @@ button:disabled {
     width: 15px;
     height: 15px;
     flex: 0 0 auto;
-    color: var(--success);
+    color: var(--role-node-won);
+}
+
+.crown-icon {
+    width: 14px;
+    height: 14px;
+
+    margin-right: 5px;
+
+    vertical-align: -2px;
+
+    color: var(--role-node-won);
+}
+
+.cell-icon {
+    width: 15px;
+    height: 15px;
+
+    vertical-align: -3px;
+}
+
+.st-ok .cell-icon {
+    color: var(--role-node-won);
+}
+
+.st-bad .cell-icon {
+    color: var(--role-block-invalid);
 }
 
 .winner-row .node-id {
@@ -1182,12 +1389,12 @@ button:disabled {
 }
 
 .block-card.block-tip {
-    border-color: rgba(113, 167, 255, .55);
+    border-color: var(--role-block-tip);
     box-shadow: var(--shadow-glow);
 }
 
 .block-card.block-invalid {
-    border: 2px solid rgba(251, 113, 133, .7);
+    border: 2px solid var(--role-block-invalid);
     background: rgba(251, 113, 133, .05);
 }
 
@@ -1196,7 +1403,7 @@ button:disabled {
     top: 10px;
     right: 10px;
 
-    color: var(--danger);
+    color: var(--role-block-invalid);
 }
 
 .block-warn svg {

@@ -214,14 +214,21 @@ function renderNodes(nodes, winner) {
 
         const cells = tr.children;
 
-        cells[0].textContent =
-            (isWinner ? "★ " : "") + n.id;
+        cells[0].innerHTML =
+            (isWinner ? CROWN_ICON : "") + escapeHtml(n.id);
+
+        cells[0].classList.toggle("node-id", isWinner);
 
         cells[1].textContent =
             (n.attempts || 0).toLocaleString();
 
         cells[2].innerHTML =
-            "<code>" + escapeHtml(fmtHash(n.last_hash)) + "</code>";
+            '<code class="hash" data-hash="' +
+                escapeHtml(n.last_hash || "") +
+            '" title="' +
+                escapeHtml(n.last_hash || "") +
+            '">' + escapeHtml(fmtHash(n.last_hash)) +
+            COPY_ICON + "</code>";
 
         cells[3].textContent =
             n.status || "—";
@@ -241,8 +248,8 @@ function renderNodes(nodes, winner) {
         cells[7].textContent =
             Number(n.balance_pending || 0).toFixed(2);
 
-        cells[8].textContent =
-            n.valid ? "✓" : "✕";
+        cells[8].innerHTML =
+            n.valid ? TICK_SMALL : ALERT_SMALL;
 
         cells[8].className =
             n.valid ? "st-ok" : "st-bad";
@@ -407,6 +414,17 @@ function renderConstellation(nodes, winner) {
 
         svg +=
             `<g class="node node--${tone}">` +
+                "<title>" +
+                    escapeHtml(
+                        "Nodo " + nd.id +
+                        " · altura " + (nd.height ?? "—") +
+                        " · intentos " + (nd.attempts || 0) +
+                        (isWinner
+                            ? " · ganador de la última ronda · " +
+                              "recompensa a las 6 confirmaciones"
+                            : "")
+                    ) +
+                "</title>" +
                 `<circle class="node-halo" cx="${pos[i].x.toFixed(1)}" ` +
                     `cy="${pos[i].y.toFixed(1)}" r="${r + 5}" />` +
                 `<circle class="node-ring" cx="${pos[i].x.toFixed(1)}" ` +
@@ -454,8 +472,55 @@ const CHECK_ICON =
     '<svg class="node-check" viewBox="0 0 24 24" fill="none" ' +
     'stroke="currentColor" stroke-width="1.75" stroke-linecap="round" ' +
     'stroke-linejoin="round" aria-hidden="true">' +
-    '<circle cx="12" cy="12" r="9"></circle>' +
-    '<path d="m9 12 2 2 4-4"></path></svg>';
+    '<circle cx="12" cy="12" r="10"></circle>' +
+    '<path d="m16 9-5.5 5.5L8 12"></path></svg>';
+
+const CROWN_ICON =
+    '<svg class="crown-icon" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.75" stroke-linecap="round" ' +
+    'stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 ' +
+    '1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-' +
+    '.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l' +
+    '4.276 3.664a1 1 0 0 0 1.516-.294z"></path>' +
+    '<path d="M5 21h14"></path></svg>';
+
+const TICK_SMALL =
+    '<svg class="cell-icon ok" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.75" stroke-linecap="round" ' +
+    'stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M20 6 9 17l-5-5"></path></svg>';
+
+const ALERT_SMALL =
+    '<svg class="cell-icon bad" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.75" stroke-linecap="round" ' +
+    'stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 ' +
+    '2 0 0 0 1.73-3"></path><path d="M12 9v4"></path>' +
+    '<path d="M12 17h.01"></path></svg>';
+
+const COPY_ICON =
+    '<svg class="copy-icon" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.75" stroke-linecap="round" ' +
+    'stroke-linejoin="round" aria-hidden="true">' +
+    '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>' +
+    '<path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2">' +
+    "</path></svg>";
+
+const PICKAXE_ICON =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" ' +
+    'aria-hidden="true">' +
+    '<path d="m14 13-8.381 8.38a1 1 0 0 1-3.001-3L11 9.999"></path>' +
+    '<path d="M15.973 4.027A13 13 0 0 0 5.902 2.373c-1.398.342-1.092 ' +
+    '2.158.277 2.601a19.9 19.9 0 0 1 5.822 3.024"></path>' +
+    '<path d="M16.001 11.999a19.9 19.9 0 0 1 3.024 5.824c.444 1.369 ' +
+    '2.26 1.676 2.603.278A13 13 0 0 0 20 8.069"></path>' +
+    '<path d="M18.352 3.352a1.205 1.205 0 0 0-1.704 0l-5.296 5.296a1.205 ' +
+    '1.205 0 0 0 0 1.704l2.296 2.296a1.205 1.205 0 0 0 1.704 0l5.296-' +
+    '5.296a1.205 1.205 0 0 0 0-1.704z"></path></svg>';
+
+
 
 
 function renderCompactNodes(nodes, winner) {
@@ -545,6 +610,21 @@ function setText(id, value) {
     if (el) {
         el.textContent = value == null ? "—" : String(value);
     }
+}
+
+
+function updateNetParams(cfg) {
+
+    const el = $("net-params");
+
+    if (!el) {
+        return;
+    }
+
+    el.textContent =
+        "N = " + (cfg.num_nodes ?? "—") +
+        " · dificultad = " + (cfg.difficulty ?? "—") +
+        " · recompensa = 50 · maduración = 6 bloques";
 }
 
 
@@ -656,10 +736,11 @@ function applyEstado(data) {
 
         button.disabled = !!data.mining;
 
-        button.textContent = data.mining
-            ? "Minando…"
-            : "Iniciar minería";
+        button.innerHTML = PICKAXE_ICON +
+            (data.mining ? "Minando…" : "Iniciar minería");
     }
+
+    updateNetParams(cfg);
 
     if (lastMining && !data.mining) {
         refreshChainTable();
@@ -743,7 +824,7 @@ async function refreshChainTable() {
 
         if (freshStatus && curStatus) {
             curStatus.className = freshStatus.className;
-            curStatus.textContent = freshStatus.textContent;
+            curStatus.innerHTML = freshStatus.innerHTML;
         }
     }
     catch (err) {

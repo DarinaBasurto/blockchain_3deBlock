@@ -55,9 +55,11 @@
                 class="chain-status {{ 'valid' if valid else 'invalid' }}"
             >
                 {% if valid %}
-                    ✓ CADENA VÁLIDA
+                    <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+                    CADENA VÁLIDA
                 {% else %}
-                    ✕ CADENA ALTERADA
+                    <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+                    CADENA ALTERADA
                 {% endif %}
             </div>
 
@@ -107,10 +109,18 @@
 
             <div>
                 <p class="section-number">00</p>
-                <h2>Configuración</h2>
+                <h2>
+                    <svg class="head-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" /></svg>
+                    Configuración
+                </h2>
             </div>
 
         </div>
+
+
+        <p class="card-sub">
+            Cambiar N o la dificultad reconstruye la red y borra el estado en curso.
+        </p>
 
 
         <div class="config-grid control-strip">
@@ -141,7 +151,10 @@
 
 
             <label class="field">
-                <span class="field-label">Dificultad</span>
+                <span class="field-label has-tip" title="Número de ceros hexadecimales al inicio del hash">
+                    Dificultad
+                    <svg class="tip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+                </span>
 
                 <input
                     id="cfg-diff"
@@ -150,7 +163,7 @@
                     max="5"
                     step="1"
                     value="4"
-                    title="Entre 3 y 5"
+                    title="Número de ceros hexadecimales al inicio del hash"
                 >
             </label>
 
@@ -160,6 +173,7 @@
                 class="btn btn-primary"
                 type="button"
             >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
                 Aplicar
             </button>
 
@@ -169,6 +183,7 @@
                 class="btn btn-ghost"
                 type="button"
             >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg>
                 Reset
             </button>
 
@@ -207,12 +222,18 @@
         </div>
 
         <div class="stat">
-            <span class="stat-label">Mempool</span>
+            <span class="stat-label">
+                <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+                Mempool
+            </span>
             <strong id="stat-mempool">—</strong>
         </div>
 
         <div class="stat">
-            <span class="stat-label">Ganador</span>
+            <span class="stat-label">
+                <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.81a1 1 0 0 1-.957-.735L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /><path d="M5 21h14" /></svg>
+                Ganador
+            </span>
             <strong id="stat-winner">—</strong>
         </div>
 
@@ -234,10 +255,13 @@
 
             <div>
                 <p class="section-number">01</p>
-                <h2>Crear transacción</h2>
+                <h2>
+                    <svg class="head-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /><path d="M14 2v5a1 1 0 0 0 1 1h5" /><path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" /></svg>
+                    Crear transacción
+                </h2>
             </div>
 
-            <span class="seal">
+            <span class="seal has-tip" title="Firma de curva Edwards25519 de 32 bytes">
                 <svg
                     viewBox="0 0 24 24"
                     fill="none"
@@ -247,14 +271,19 @@
                     stroke-linejoin="round"
                     aria-hidden="true"
                 >
-                    <rect x="4" y="10" width="16" height="10" rx="2"></rect>
-                    <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
 
                 Ed25519
             </span>
 
         </div>
+
+
+        <p class="card-sub">
+            Firma Ed25519 sobre serialización canónica. amount=0 no mueve fondos.
+        </p>
 
 
         <form
@@ -337,8 +366,8 @@
                     stroke-linejoin="round"
                     aria-hidden="true"
                 >
-                    <path d="M12 20h9"></path>
-                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                    <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"></path>
+                    <path d="m21.854 2.147-10.94 10.939"></path>
                 </svg>
 
                 Firmar y enviar
@@ -410,7 +439,10 @@
 
             <div>
                 <p class="section-number">02</p>
-                <h2>Nodos</h2>
+                <h2>
+                    <svg class="head-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20v2" /><path d="M12 2v2" /><path d="M17 20v2" /><path d="M17 2v2" /><path d="M2 12h2" /><path d="M2 17h2" /><path d="M2 7h2" /><path d="M20 12h2" /><path d="M20 17h2" /><path d="M20 7h2" /><path d="M7 20v2" /><path d="M7 2v2" /><rect x="4" y="4" width="16" height="16" rx="2" /><rect x="8" y="8" width="8" height="8" rx="1" /></svg>
+                    Nodos
+                </h2>
             </div>
 
 
@@ -421,12 +453,18 @@
                     class="btn btn-primary mine-button"
                     type="submit"
                 >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 13-8.381 8.38a1 1 0 0 1-3.001-3L11 9.999" /><path d="M15.973 4.027A13 13 0 0 0 5.902 2.373c-1.398.342-1.092 2.158.277 2.601a19.9 19.9 0 0 1 5.822 3.024" /><path d="M16.001 11.999a19.9 19.9 0 0 1 3.024 5.824c.444 1.369 2.26 1.676 2.603.278A13 13 0 0 0 20 8.069" /><path d="M18.352 3.352a1.205 1.205 0 0 0-1.704 0l-5.296 5.296a1.205 1.205 0 0 0 0 1.704l2.296 2.296a1.205 1.205 0 0 0 1.704 0l5.296-5.296a1.205 1.205 0 0 0 0-1.704z" /></svg>
                     Iniciar minería
                 </button>
 
             </form>
 
         </div>
+
+
+        <p class="card-sub">
+            Cada nodo prueba nonces i, i+N, i+2N… El ganador enlaza al bloque.
+        </p>
 
 
         <div class="nodes-visual">
@@ -443,6 +481,10 @@
 
                 <div id="constellation" class="constellation"></div>
 
+                <p class="card-sub mono" id="net-params">
+                    N = 10 · dificultad = 4 · recompensa = 50 · maduración = 6 bloques
+                </p>
+
             </div>
 
 
@@ -456,8 +498,8 @@
                             <th>Estado</th>
                             <th>Intentos</th>
                             <th>Altura</th>
-                            <th>Disp</th>
-                            <th>Pend</th>
+                            <th title="Saldo disponible (confirmado)">Disp</th>
+                            <th title="Saldo pendiente de confirmación">Pend</th>
                         </tr>
                     </thead>
 
@@ -466,6 +508,11 @@
                 </table>
 
             </div>
+
+
+            <p class="card-sub">
+                Intentos por ronda de toda la red. Se reinicia cuando alguien gana.
+            </p>
 
         </div>
 
@@ -536,6 +583,11 @@
         </div>
 
 
+        <p class="card-sub">
+            Sorteo ponderado por apuesta. Se acepta con 3V ≥ 2A.
+        </p>
+
+
         <div id="pos-stakes" class="pos-grid"></div>
 
 
@@ -569,19 +621,28 @@
 
             <div>
                 <p class="section-number">03</p>
-                <h2>Cadena de bloques</h2>
+                <h2>
+                    <svg class="head-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                    Cadena de bloques
+                </h2>
             </div>
 
 
             <form id="alter-form" action="/alterar" method="POST">
 
                 <button class="btn btn-ghost" type="submit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
                     Alterar bloque
                 </button>
 
             </form>
 
         </div>
+
+
+        <p class="card-sub">
+            Cada bloque referencia el hash anterior. Alterar uno invalida la cadena.
+        </p>
 
 
         <div id="chain-row" class="chain-row">
@@ -593,6 +654,7 @@
                         {{ 'block-tip' if loop.last }}
                         {{ 'block-invalid' if not b.valid }}"
                     data-index="{{ b.index }}"
+                    title="Bloque {{ b.index }} · {{ b.hash[:8] }}… · minado por {{ b.miner or '—' }}"
                 >
 
                     {% if not b.valid %}
@@ -605,7 +667,7 @@
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
                             >
-                                <path d="m10.29 3.86-8.47 14.14A2 2 0 0 0 3.53 21h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"></path>
+                                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path>
                                 <path d="M12 9v4"></path>
                                 <path d="M12 17h.01"></path>
                             </svg>
@@ -616,6 +678,7 @@
 
                         <span class="block-badge">
                             {% if b.is_genesis %}
+                                <svg class="badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="1" /></svg>
                                 GÉNESIS
                             {% else %}
                                 #{{ '%02d'|format(b.index) }}
@@ -638,13 +701,18 @@
                                     class="hash"
                                     data-hash="{{ b.hash }}"
                                     title="{{ b.hash }}"
-                                >{{ b.hash[:10] }}…</code>
+                                >{{ b.hash[:10] }}…
+                                    <svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>
+                                </code>
                             </dd>
                         </div>
 
 
                         <div class="block-field">
-                            <dt>prev</dt>
+                            <dt>
+                                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                                prev
+                            </dt>
                             <dd>
                                 {% if b.is_genesis %}
                                     <code class="hash-muted">—</code>
@@ -653,7 +721,9 @@
                                         class="hash"
                                         data-hash="{{ b.prev_hash }}"
                                         title="{{ b.prev_hash }}"
-                                    >{{ b.prev_hash[:10] }}…</code>
+                                    >{{ b.prev_hash[:10] }}…
+                                        <svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>
+                                    </code>
                                 {% endif %}
                             </dd>
                         </div>
@@ -673,7 +743,7 @@
 
                         <div class="block-field">
                             <dt>nonce</dt>
-                            <dd>{{ b.nonce }}</dd>
+                            <dd title="Valor iterado por el minero hasta hallar el hash objetivo">{{ b.nonce }}</dd>
                         </div>
 
 
@@ -723,7 +793,7 @@
                             stroke-linejoin="round"
                         >
                             <path d="M5 12h14" />
-                            <path d="m13 6 6 6-6 6" />
+                            <path d="m12 5 7 7-7 7" />
                         </svg>
 
                     </span>
@@ -750,12 +820,20 @@
 
             <div>
                 <p class="section-number">04</p>
-                <h2>Bitácora</h2>
+                <h2>
+                    <svg class="head-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+                    Bitácora
+                </h2>
             </div>
 
             <span class="pill">últimos 30 eventos</span>
 
         </div>
+
+
+        <p class="card-sub">
+            Eventos del sistema en orden cronológico inverso.
+        </p>
 
 
         <div id="log-list" class="log-list"></div>
