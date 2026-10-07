@@ -757,6 +757,55 @@
 
 
     // -----------------------------------------------------
+    // FORM · /alterar (JSON, inline errors)
+    // -----------------------------------------------------
+
+    async function submitAlter(event) {
+
+        event.preventDefault();
+
+        let errorEl = $("alter-error");
+
+        if (!errorEl) {
+            errorEl = document.createElement("div");
+            errorEl.id = "alter-error";
+            errorEl.className = "inline-error";
+            event.currentTarget.appendChild(errorEl);
+        }
+
+        setInlineError("alter-error", "");
+
+        try {
+
+            const res = await fetch("/alterar", {
+                method: "POST",
+                headers: { "Accept": "application/json" },
+            });
+
+            if (!res.ok) {
+
+                setInlineError(
+                    "alter-error",
+                    "No se pudo alterar la cadena: HTTP " + res.status
+                );
+
+                return;
+            }
+
+            await refreshChainTable();
+            await fetchEstado();
+        }
+        catch (err) {
+
+            setInlineError(
+                "alter-error",
+                "No se pudo alterar la cadena: " + err.message
+            );
+        }
+    }
+
+
+    // -----------------------------------------------------
     // INIT
     // -----------------------------------------------------
 
@@ -766,6 +815,12 @@
 
         if (txForm) {
             txForm.addEventListener("submit", submitTransaction);
+        }
+
+        const alterForm = $("alter-form");
+
+        if (alterForm) {
+            alterForm.addEventListener("submit", submitAlter);
         }
 
         const applyBtn = $("cfg-apply");

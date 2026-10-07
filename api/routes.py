@@ -160,7 +160,7 @@ def mining_worker(node, node_index, transactions, prev_hash, timestamp):
         prev_hash=prev_hash,
         merkle_root=None,
         timestamp=timestamp,
-        difficulty=DIFFICULTY,
+        difficulty=node.consensus.difficulty,
         nonce=node_index,
         miner=node.node_id,
     )
@@ -172,7 +172,7 @@ def mining_worker(node, node_index, transactions, prev_hash, timestamp):
 
     nonce = node_index
     attempts = 0
-    prefix = "0" * DIFFICULTY
+    prefix = "0" * node.consensus.difficulty
 
     with stats_lock:
         node_stats[node.node_id]["status"] = "Minando"
@@ -213,6 +213,7 @@ def mining_worker(node, node_index, transactions, prev_hash, timestamp):
                     candidate,
                     chain_copy
                 ):
+                    log_event("worker_error", f"{node.node_id}: bloque candidato rechazado por consenso")
                     return
 
                 # Marcamos ganador ANTES de que otro hilo pueda entrar
@@ -643,19 +644,30 @@ def register_routes(app):
                 if not addr and hasattr(node, "wallet") and node.wallet:
                     addr = node.wallet.direccion()
                     node.address = addr
-                
-                chain_balances = compute_balances(node.chain)
-                entry = chain_balances.get(addr) if addr else None
-                avail = entry["available"] if entry else 0.0
-                pend = entry["pending"] if entry else 0.0
+
+                is_valid = node.is_chain_valid()
+
+                if is_valid:
+                    balances = compute_balances(node.chain)
+                    node_available = (
+                        balances.get(addr, {}).get("available", 0.0)
+                        if addr else 0.0
+                    )
+                    node_pending = (
+                        balances.get(addr, {}).get("pending", 0.0)
+                        if addr else 0.0
+                    )
+                else:
+                    node_available = 0.0
+                    node_pending = 0.0
 
                 node_snapshots.append({
                     "node_id": node.node_id,
                     "height": len(node.chain),
                     "mempool": len(node.mempool),
-                    "valid": node.is_chain_valid(),
-                    "balance_available": avail,
-                    "balance_pending": pend,
+                    "valid": is_valid,
+                    "balance_available": node_available,
+                    "balance_pending": node_pending,
                 })
 
         with stats_lock:
@@ -727,6 +739,14 @@ def register_routes(app):
             block.transactions[0].amount += 9999
 
         log_event("tamper", "Cadena alterada para demo")
+
+        if (
+            request.is_json
+            or "application/json" in request.headers.get("Accept", "")
+        ):
+            return jsonify(
+                {"ok": True, "msg": "Cadena alterada para demo"}
+            ), 200
 
         flash(
             "Se alteró una transacción del bloque 1 en el Nodo A. "
