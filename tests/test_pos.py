@@ -111,7 +111,6 @@ def test_pos_dishonest_proposer_slashing():
     assert result["new_attempt_needed"] is True
 
 
-@pytest.mark.xfail(reason="global slashing-to-zero consensus suspension not yet in repo")
 def test_pos_all_validators_slashed_to_zero():
     """POS-06: todos los validadores castigados hasta quedar sin saldo."""
     validators = [

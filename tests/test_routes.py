@@ -3,7 +3,6 @@
 import pytest
 
 
-@pytest.mark.xfail(reason="/reset route not yet in repo")
 def test_reset_simulation_endpoint(flask_client):
     """APP-01: reiniciar la simulación al estado Génesis."""
     r = flask_client.post("/reset")
@@ -26,7 +25,6 @@ def test_polling_state_during_mining_race(flask_client):
         assert r.status_code == 200
 
 
-@pytest.mark.xfail(reason="state_lock and concurrent tab simulation not yet in repo")
 def test_concurrent_tab_requests(flask_client):
     """APP-03: acciones simultáneas desde múltiples pestañas."""
     # Requiere state_lock para serializar accesos a mempool/stats/mining_state
@@ -36,7 +34,6 @@ def test_concurrent_tab_requests(flask_client):
     assert r2.status_code != 500
 
 
-@pytest.mark.xfail(reason="route-level input validation not yet in repo")
 def test_malformed_route_requests(flask_client):
     """APP-04: peticiones HTTP con datos mal formados → 400, sin 500."""
     # Falta campo amount
