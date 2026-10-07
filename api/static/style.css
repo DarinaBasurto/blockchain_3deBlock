@@ -63,31 +63,31 @@
     --night: #2d545e;       /* Night Blue      */
     --night-shadow: #12343b;/* Night Blue Shadow */
 
-    /* derived sand tints for layering/depth (kept in the same warm family) */
-    --bg: #e1b382;
-    --panel: #f2dcbd;
-    --panel-2: #e7c59c;
-    --border: #c89666;
-    --hairline: rgba(18, 52, 59, .14);
+    /* derived night-blue tints for layering/depth (kept in the same cool family) */
+    --bg: #12343b;
+    --panel: #1c4550;
+    --panel-2: #0d2a30;
+    --border: rgba(200, 150, 102, .28);
+    --hairline: rgba(225, 179, 130, .14);
 
-    --text: #12343b;
-    --muted: #2d545e;
+    --text: #e1b382;
+    --muted: #c89666;
 
-    --accent: #12343b;
-    --accent-2: #2d545e;
-    --success: #2f6b4f;
-    --danger: #a8432c;
-    --warning: #b06a1f;
+    --accent: #e1b382;
+    --accent-2: #c89666;
+    --success: #86c9a0;
+    --danger: #e08a72;
+    --warning: #e6b566;
 
     /* rgb channels so alpha tints stay in-palette (rgba(var(--x-rgb), a)) */
-    --accent-rgb: 18, 52, 59;
-    --accent-2-rgb: 45, 84, 94;
-    --text-rgb: 18, 52, 59;
-    --panel-rgb: 242, 220, 189;
+    --accent-rgb: 225, 179, 130;
+    --accent-2-rgb: 200, 150, 102;
+    --text-rgb: 225, 179, 130;
+    --panel-rgb: 28, 69, 80;
     --sand-rgb: 225, 179, 130;
-    --success-rgb: 47, 107, 79;
-    --danger-rgb: 168, 67, 44;
-    --warning-rgb: 176, 106, 31;
+    --success-rgb: 134, 201, 160;
+    --danger-rgb: 224, 138, 114;
+    --warning-rgb: 230, 181, 102;
 
     --font-display: "Libron", Georgia, "Times New Roman", serif;
     --font-ui: "Libron", Georgia, "Times New Roman", serif;
@@ -106,12 +106,12 @@
     --radius-base: 12px;
     --radius-pill: 999px;
 
-    --shadow-card: 0 1px 2px rgba(18, 52, 59, .10),
-        0 10px 26px rgba(18, 52, 59, .16);
-    --shadow-raise: inset 0 1px 0 rgba(255, 255, 255, .55);
-    --shadow-inset: inset 0 1px 3px rgba(18, 52, 59, .16);
-    --shadow-glow: 0 0 0 1px rgba(18, 52, 59, .28),
-        0 10px 28px rgba(18, 52, 59, .22);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, .35),
+        0 10px 26px rgba(0, 0, 0, .40);
+    --shadow-raise: inset 0 1px 0 rgba(255, 255, 255, .07);
+    --shadow-inset: inset 0 1px 3px rgba(0, 0, 0, .35);
+    --shadow-glow: 0 0 0 1px rgba(var(--accent-rgb), .45),
+        0 10px 28px rgba(var(--accent-rgb), .22);
 
     --ease: cubic-bezier(.2, .7, .2, 1);
 }
@@ -123,9 +123,9 @@
 /* ----------------------------------------------------- */
 
 :root {
-    --role-network-link: rgba(45, 84, 94, .28);
+    --role-network-link: rgba(200, 150, 102, .30);
     --role-network-link-hot: var(--accent);
-    --role-node-idle: var(--muted);
+    --role-node-idle: rgba(225, 179, 130, .5);
     --role-node-mining: var(--warning);
     --role-node-won: var(--success);
     --role-block-genesis: var(--accent-2);
@@ -135,7 +135,7 @@
     --role-balance-available: var(--success);
     --role-balance-pending: var(--warning);
     --role-badge-seal: var(--accent-2);
-    --role-hairline: rgba(18, 52, 59, .12);
+    --role-hairline: rgba(225, 179, 130, .14);
 }
 
 
@@ -150,10 +150,10 @@
 body {
     margin: 0;
     background:
-        radial-gradient(1200px 620px at 50% -8%, #f6e5c8 0, transparent 55%),
-        radial-gradient(900px 520px at 100% 0, rgba(200, 150, 102, .55) 0,
+        radial-gradient(1100px 560px at 50% -10%, #1f4c56 0, transparent 55%),
+        radial-gradient(900px 520px at 100% 0, rgba(45, 84, 94, .6) 0,
             transparent 60%),
-        linear-gradient(180deg, #e6bd90 0, #e1b382 42%, #d8a877 100%);
+        linear-gradient(180deg, #164049 0, #12343b 45%, #0d2a30 100%);
     background-attachment: fixed;
 
     color: var(--text);
@@ -166,7 +166,7 @@ body {
     text-rendering: optimizeLegibility;
 }
 
-/* CSS-only noise texture (SVG data URI) breaks the flat sand field. */
+/* CSS-only noise texture (SVG data URI) breaks the flat night field. */
 body::before {
     content: "";
     position: fixed;
@@ -176,7 +176,6 @@ body::before {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 
     opacity: .05;
-    mix-blend-mode: multiply;
     pointer-events: none;
 }
 
