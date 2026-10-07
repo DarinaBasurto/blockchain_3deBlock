@@ -346,7 +346,7 @@ function line(x1, y1, x2, y2) {
 }
 
 
-function renderConstellation(nodes, winner, mining) {
+function renderConstellation(nodes, winner) {
 
     const host = $("constellation");
 
@@ -459,7 +459,7 @@ function renderConstellation(nodes, winner, mining) {
     if (meta) {
         meta.textContent = winner
             ? "ganador " + winner
-            : (mining ? "minando" : "idle");
+            : (lastMining ? "minando" : "idle");
     }
 }
 
@@ -719,7 +719,7 @@ function applyEstado(data) {
     renderNodes(data.nodes || [], data.winner);
     renderCompactNodes(data.nodes || [], data.winner);
     renderLog(data.log || []);
-    renderConstellation(data.nodes || [], data.winner, data.mining);
+    renderConstellation(data.nodes || [], data.winner);
 
     updateStats(data, cfg);
     updateMiniPanel(data, cfg);
