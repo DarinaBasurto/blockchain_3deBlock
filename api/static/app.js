@@ -4,7 +4,6 @@
    Vendored libs are loaded locally — no CDN.
    ========================================================= */
 
-import uPlot from "./vendor/uplot.js";
 import autoAnimate from "./vendor/auto-animate.js";
 
 
@@ -15,18 +14,11 @@ import autoAnimate from "./vendor/auto-animate.js";
 let fetching = false;
 let lastMining = false;
 let lastNodeIds = [];
+let lastCompactIds = [];
 let lastConfigSignature = "";
 let chainRefreshing = false;
 
-let chart = null;
-let chartKey = "";
-let chartT0 = 0;
-let samplesT = [];
-let samplesById = new Map();
-
 let logKeys = new Set();
-
-const MAX_SAMPLES = 120;
 
 
 // -----------------------------------------------------
@@ -336,8 +328,8 @@ function renderLog(entries) {
 // RENDER · CONSTELACIÓN
 // -----------------------------------------------------
 
-const VBW = 640;
-const VBH = 360;
+const VBW = 1160;
+const VBH = 300;
 
 function line(x1, y1, x2, y2) {
     return (
@@ -365,11 +357,11 @@ function renderConstellation(nodes, winner) {
     }
 
     const cx = VBW / 2;
-    const cy = 165;
-    const rx = 252;
-    const ry = 118;
+    const cy = 112;
+    const rx = 500;
+    const ry = 82;
     const n = list.length;
-    const r = n <= 12 ? 17 : (n <= 16 ? 14 : 12);
+    const r = n <= 12 ? 20 : (n <= 16 ? 17 : 14);
     const showSub = n <= 14;
 
     const pos = list.map((_, i) => {
@@ -455,174 +447,86 @@ function renderConstellation(nodes, winner) {
 
 
 // -----------------------------------------------------
-// RENDER · GRÁFICA DE INTENTOS (uPlot)
+// RENDER · NODOS (tabla compacta)
 // -----------------------------------------------------
 
-function colorFor(i) {
-    const hue = (210 + i * 137.508) % 360;
-    return `hsl(${hue} 68% 62%)`;
-}
+const CHECK_ICON =
+    '<svg class="node-check" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.75" stroke-linecap="round" ' +
+    'stroke-linejoin="round" aria-hidden="true">' +
+    '<circle cx="12" cy="12" r="9"></circle>' +
+    '<path d="m9 12 2 2 4-4"></path></svg>';
 
 
-function resetChartState() {
+function renderCompactNodes(nodes, winner) {
 
-    if (chart) {
-        chart.destroy();
-        chart = null;
-    }
+    const tbody = $("nodes-compact-body");
 
-    chartKey = "";
-    chartT0 = 0;
-    samplesT = [];
-    samplesById = new Map();
-}
-
-
-function chartCard() {
-
-    const el = $("race-chart");
-
-    return el ? el.closest(".chart-card") : null;
-}
-
-
-function setChartEmpty(isEmpty) {
-
-    const card = chartCard();
-
-    if (card) {
-        card.classList.toggle("is-empty", !!isEmpty);
-    }
-}
-
-
-function ensureChart(ids) {
-
-    const key = ids.join(",");
-
-    if (chart && chartKey === key) {
-        return;
-    }
-
-    if (chart) {
-        chart.destroy();
-        chart = null;
-    }
-
-    const host = $("race-chart");
-
-    if (!host || ids.length === 0) {
-        return;
-    }
-
-    chartKey = key;
-
-    const gridColor = "rgba(255,255,255,.06)";
-    const tickColor = "rgba(255,255,255,.12)";
-    const textColor = "#8fa0b8";
-
-    const opts = {
-
-        width: host.clientWidth || 520,
-        height: 220,
-
-        series: [
-            {},
-            ...ids.map((id, i) => ({
-                label: id,
-                stroke: colorFor(i),
-                width: 2,
-                points: { show: false },
-            })),
-        ],
-
-        scales: {
-            x: { time: false },
-        },
-
-        axes: [
-            {
-                stroke: textColor,
-                grid: { stroke: gridColor },
-                ticks: { stroke: tickColor },
-                values: (u, vals) =>
-                    vals.map((v) => v.toFixed(1) + "s"),
-            },
-            {
-                stroke: textColor,
-                grid: { stroke: gridColor },
-                ticks: { stroke: tickColor },
-            },
-        ],
-
-        legend: { show: true },
-        cursor: { show: false },
-    };
-
-    chart = new uPlot(opts, currentChartData(), host);
-}
-
-
-function currentChartData() {
-
-    const ids = chartKey ? chartKey.split(",") : [];
-
-    return [
-        samplesT.slice(),
-        ...ids.map((id) => (samplesById.get(id) || []).slice()),
-    ];
-}
-
-
-function sampleChart(nodes) {
-
-    if (!nodes || nodes.length === 0) {
+    if (!tbody) {
         return;
     }
 
     const ids = nodes.map((n) => n.id);
-    const key = ids.join(",");
 
-    if (key !== chartKey && chart) {
-        // set de nodos cambió: reiniciar datos
-        resetChartState();
+    const sameOrder =
+        ids.length === lastCompactIds.length &&
+        ids.every((id, i) => id === lastCompactIds[i]);
+
+    if (!sameOrder) {
+
+        tbody.innerHTML = "";
+
+        nodes.forEach((n) => {
+
+            const tr = document.createElement("tr");
+            tr.dataset.id = n.id;
+
+            for (let i = 0; i < 6; i += 1) {
+                tr.appendChild(document.createElement("td"));
+            }
+
+            tbody.appendChild(tr);
+        });
+
+        lastCompactIds = ids.slice();
     }
 
-    if (samplesT.length === 0) {
+    nodes.forEach((n) => {
 
-        chartT0 = Date.now() / 1000;
-        samplesById = new Map(ids.map((id) => [id, []]));
-    }
+        const tr = tbody.querySelector(
+            `tr[data-id="${CSS.escape(n.id)}"]`
+        );
 
-    samplesT.push((Date.now() / 1000) - chartT0);
-
-    ids.forEach((id) => {
-
-        if (!samplesById.has(id)) {
-            samplesById.set(id, new Array(samplesT.length - 1).fill(0));
+        if (!tr) {
+            return;
         }
 
-        const arr = samplesById.get(id);
+        const isWinner = winner === n.id;
 
-        const node = nodes.find((n) => n.id === id);
+        tr.classList.toggle("winner-row", isWinner);
 
-        arr.push(Number(node && node.attempts) || 0);
+        const cells = tr.children;
+
+        cells[0].innerHTML =
+            '<span class="node-cell">' +
+                (isWinner ? CHECK_ICON : "") +
+                '<span class="node-id">' + escapeHtml(n.id) + "</span>" +
+            "</span>";
+
+        cells[1].textContent = n.status || "—";
+        cells[1].className = statusClass(n.status);
+
+        cells[2].textContent =
+            Number(n.attempts || 0).toLocaleString();
+
+        cells[3].textContent = n.height;
+
+        cells[4].textContent =
+            Number(n.balance_available || 0).toFixed(2);
+
+        cells[5].textContent =
+            Number(n.balance_pending || 0).toFixed(2);
     });
-
-    while (samplesT.length > MAX_SAMPLES) {
-
-        samplesT.shift();
-
-        samplesById.forEach((arr) => arr.shift());
-    }
-
-    ensureChart(ids);
-
-    if (chart) {
-        chart.setData(currentChartData());
-    }
-
-    setChartEmpty(samplesT.length < 2);
 }
 
 
@@ -668,9 +572,9 @@ function applyEstado(data) {
     populatePosStakes(data.nodes || []);
 
     renderNodes(data.nodes || [], data.winner);
+    renderCompactNodes(data.nodes || [], data.winner);
     renderLog(data.log || []);
     renderConstellation(data.nodes || [], data.winner);
-    sampleChart(data.nodes || []);
 
     const button = $("mine-button");
 
@@ -962,9 +866,9 @@ async function applyConfig() {
         }
 
         lastNodeIds = [];
+        lastCompactIds = [];
         lastConfigSignature = "";
         logKeys = new Set();
-        resetChartState();
 
         await fetchEstado();
         await refreshChainTable();
@@ -998,9 +902,9 @@ async function resetSim() {
         }
 
         lastNodeIds = [];
+        lastCompactIds = [];
         lastConfigSignature = "";
         logKeys = new Set();
-        resetChartState();
 
         await fetchEstado();
         await refreshChainTable();
@@ -1253,11 +1157,16 @@ function init() {
     }
 
     const nodesBody = $("nodes-body");
+    const compactBody = $("nodes-compact-body");
     const logList = $("log-list");
     const chainRow = $("chain-row");
 
     if (nodesBody) {
         autoAnimate(nodesBody);
+    }
+
+    if (compactBody) {
+        autoAnimate(compactBody);
     }
 
     if (logList) {
@@ -1269,18 +1178,6 @@ function init() {
     }
 
     installCopyHandler();
-
-    window.addEventListener("resize", () => {
-
-        if (chart) {
-            chart.setSize({
-                width: chart.root.clientWidth || 520,
-                height: 220,
-            });
-        }
-    });
-
-    setChartEmpty(true);
 
     fetchEstado();
 

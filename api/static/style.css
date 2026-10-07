@@ -350,8 +350,7 @@ h1 span {
     align-items: center;
 }
 
-.topbar .primary-button,
-.topbar .danger-button {
+.topbar .btn {
     white-space: nowrap;
 }
 
@@ -490,26 +489,57 @@ button:disabled {
     cursor: not-allowed;
 }
 
-.primary-button,
-.mine-button {
+/* Button system — three variants, used consistently */
+
+.btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 9px;
+    gap: 6px;
 
-    align-self: center;
+    padding: 13px 18px;
 
-    border: 1px solid var(--accent);
+    border: 1px solid transparent;
+    border-radius: var(--radius-base);
+
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background-color .12s ease-out,
+        border-color .12s ease-out,
+        transform .12s ease-out,
+        box-shadow .12s ease-out;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+}
+
+.btn-primary {
+    border-color: var(--accent);
     border-top-color: var(--accent-2);
 
     background: var(--accent);
     color: #08111f;
 }
 
-.primary-button:hover:not(:disabled),
-.mine-button:hover:not(:disabled) {
-    transform: translateY(-1px);
-
+.btn-primary:hover:not(:disabled) {
     border-color: var(--accent-2);
 
     box-shadow:
@@ -517,12 +547,35 @@ button:disabled {
         0 8px 20px rgba(113, 167, 255, .22);
 }
 
-.primary-button svg,
-.mine-button svg {
-    width: 16px;
-    height: 16px;
+.btn-ghost {
+    border-color: var(--border);
 
-    flex: 0 0 auto;
+    background: transparent;
+    color: var(--text);
+}
+
+.btn-ghost:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(113, 167, 255, .04);
+}
+
+.btn-icon {
+    width: 32px;
+    height: 32px;
+
+    padding: 0;
+
+    border-radius: 8px;
+
+    background: transparent;
+    color: var(--muted);
+}
+
+.btn-icon:hover:not(:disabled) {
+    border-color: var(--border);
+
+    background: rgba(113, 167, 255, .04);
+    color: var(--accent);
 }
 
 /* Full-width submit with a leading signature icon */
@@ -537,17 +590,6 @@ button:disabled {
 
 .mine-button {
     min-width: 180px;
-}
-
-.danger-button {
-    background: rgba(251, 113, 133, .12);
-    border: 1px solid rgba(251, 113, 133, .35);
-
-    color: var(--danger);
-}
-
-.danger-button:hover {
-    background: rgba(251, 113, 133, .2);
 }
 
 /* Chipped seal — the crypto badge on the declaration */
@@ -590,24 +632,20 @@ button:disabled {
 /* NETWORK · CONSTELLATION + RACE CHART                  */
 /* ----------------------------------------------------- */
 
-.race-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: var(--space-5);
-    margin-bottom: var(--space-4);
-}
+.constellation-card {
+    width: 100%;
 
-.constellation-card,
-.chart-card {
     border: 1px solid var(--border);
     border-radius: 14px;
     background: #0c1320;
     padding: var(--space-4);
+
+    margin-bottom: var(--space-4);
 }
 
 .constellation {
     position: relative;
-    height: 360px;
+    height: 240px;
 }
 
 .constellation svg {
@@ -699,18 +737,7 @@ button:disabled {
     }
 }
 
-.race-chart {
-    min-height: 220px;
-}
-
-.race-chart .u-legend {
-    font-family: var(--font-mono);
-    font-size: 10px;
-}
-
 .empty-state {
-    display: none;
-
     padding: var(--space-6) 0;
     text-align: center;
 
@@ -718,12 +745,54 @@ button:disabled {
     font-size: 13px;
 }
 
-.chart-card.is-empty .race-chart {
-    display: none;
+/* ----------------------------------------------------- */
+/* NODES · COMPACT TABLE                                 */
+/* ----------------------------------------------------- */
+
+.compact-wrap {
+    overflow-x: auto;
+
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: #0c1320;
 }
 
-.chart-card.is-empty .empty-state {
-    display: block;
+.compact-table tbody td {
+    height: 40px;
+    padding: 0 14px;
+}
+
+.compact-table tbody tr {
+    transition:
+        box-shadow .12s ease-out,
+        background-color .12s ease-out;
+}
+
+.compact-table tbody tr:hover {
+    box-shadow: inset 3px 0 0 var(--accent);
+    background: rgba(113, 167, 255, .03);
+}
+
+.compact-table tr.winner-row {
+    box-shadow: inset 3px 0 0 var(--success);
+}
+
+.node-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.node-check {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 auto;
+    color: var(--success);
+}
+
+.winner-row .node-id {
+    color: var(--accent);
+    font-weight: 700;
 }
 
 
@@ -740,7 +809,7 @@ button:disabled {
 
 .detail-view > summary {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 10px;
 
     cursor: pointer;
@@ -754,13 +823,12 @@ button:disabled {
     display: none;
 }
 
-.detail-view > summary::before {
-    content: "▸";
-    color: var(--accent);
+.detail-toggle {
+    transition: transform .12s ease-out;
 }
 
-.detail-view[open] > summary::before {
-    content: "▾";
+.detail-view[open] .detail-toggle {
+    transform: rotate(180deg);
 }
 
 .detail-title {
@@ -862,8 +930,8 @@ button:disabled {
 
 .chain-row {
     display: flex;
-    align-items: stretch;
-    gap: 10px;
+    align-items: center;
+    gap: 24px;
 
     overflow-x: auto;
     padding: 4px 2px 14px;
@@ -872,8 +940,16 @@ button:disabled {
 }
 
 .block-card {
+    position: relative;
     flex: 0 0 auto;
-    width: 232px;
+
+    min-width: 260px;
+    max-width: 320px;
+    width: auto;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
 
     border: 1px solid var(--border);
     border-radius: 14px;
@@ -892,8 +968,22 @@ button:disabled {
 }
 
 .block-card.block-invalid {
-    border-color: rgba(251, 113, 133, .7);
+    border: 2px solid rgba(251, 113, 133, .7);
     background: rgba(251, 113, 133, .05);
+}
+
+.block-warn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+
+    color: var(--danger);
+}
+
+.block-warn svg {
+    display: block;
+    width: 16px;
+    height: 16px;
 }
 
 .block-head {
@@ -904,11 +994,14 @@ button:disabled {
     margin-bottom: var(--space-3);
 }
 
-.block-index {
-    font-family: var(--font-display);
-    font-size: 16px;
-    font-weight: 700;
-    letter-spacing: -.01em;
+.block-badge {
+    color: var(--text);
+
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
 }
 
 .block-tag {
@@ -928,14 +1021,14 @@ button:disabled {
     margin: 0;
 }
 
-.field {
+.block-field {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
     gap: 10px;
 }
 
-.field dt {
+.block-field dt {
     color: var(--muted);
     font-size: 11px;
     font-weight: 700;
@@ -943,14 +1036,45 @@ button:disabled {
     text-transform: uppercase;
 }
 
-.field dd {
+.block-field dd {
     margin: 0;
+
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
     font-size: 12px;
     text-align: right;
 }
 
+.block-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-2);
+
+    margin-top: auto;
+    padding-top: var(--space-3);
+
+    border-top: 1px solid var(--hairline);
+
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.block-foot-next {
+    color: var(--accent);
+    font-family: var(--font-mono);
+}
+
+.block-foot-tip {
+    color: var(--success);
+    font-weight: 700;
+}
+
 .hash {
     color: var(--accent);
+    font-family: var(--font-mono);
     font-size: 12px;
     cursor: copy;
 }
@@ -972,13 +1096,14 @@ button:disabled {
     display: flex;
     flex: 0 0 auto;
     align-items: center;
+    align-self: center;
 
     color: var(--muted);
 }
 
 .chain-arrow svg {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
 }
 
 
@@ -1177,10 +1302,6 @@ button:disabled {
 
 @media (max-width: 950px) {
 
-    .race-layout {
-        grid-template-columns: 1fr;
-    }
-
     .summary-grid,
     .nodes-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1230,6 +1351,55 @@ button:disabled {
 
     .field-label {
         flex-basis: auto;
+    }
+
+    /* Nodes: table first, constellation below */
+
+    .nodes-visual {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .nodes-visual .compact-wrap {
+        order: -1;
+
+        margin-bottom: var(--space-4);
+    }
+
+    .nodes-visual .constellation-card {
+        margin-bottom: 0;
+    }
+
+    .nodes-visual .constellation,
+    .nodes-visual .constellation svg {
+        height: auto;
+    }
+
+    .compact-table thead th {
+        padding: 10px 9px;
+        font-size: 10px;
+    }
+
+    .compact-table tbody td {
+        padding: 0 9px;
+        font-size: 12px;
+    }
+
+    /* Chain: one block per row, arrow pointing down */
+
+    .chain-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .chain-arrow svg {
+        transform: rotate(90deg);
+    }
+
+    .block-card {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
     }
 }
 
