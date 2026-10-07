@@ -336,6 +336,28 @@ def register_routes(app):
             is_mining = mining_state["mining"]
             winner = mining_state["winner"]
 
+            chain_view = []
+            for i, blk in enumerate(chain):
+                if i == 0:
+                    blk_valid = True
+                else:
+                    blk_valid = main_node.consensus.validate_block(
+                        blk, chain[:i]
+                    )
+                chain_view.append({
+                    "index": i,
+                    "hash": blk.hash,
+                    "prev_hash": blk.header.prev_hash,
+                    "merkle_root": blk.header.merkle_root,
+                    "miner": blk.header.miner,
+                    "tx_count": len(blk.transactions),
+                    "difficulty": blk.header.difficulty,
+                    "nonce": blk.header.nonce,
+                    "timestamp": blk.header.timestamp,
+                    "valid": blk_valid,
+                    "is_genesis": i == 0,
+                })
+
         with stats_lock:
             local_stats = copy.deepcopy(node_stats)
 
@@ -343,6 +365,7 @@ def register_routes(app):
             "index.html",
             nodes=local_nodes,
             chain=chain,
+            chain_view=chain_view,
             mempool=mempool,
             valid=valid,
             wallets=local_wallets,

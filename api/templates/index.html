@@ -15,6 +15,11 @@
         rel="stylesheet"
         href="{{ url_for('static', filename='style.css') }}"
     >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='vendor/uplot.css') }}"
+    >
 </head>
 
 
@@ -309,29 +314,73 @@
         </div>
 
 
-        <div class="table-wrap">
+        <div class="race-layout">
 
-            <table class="data-table" id="nodes-table">
+            <div class="constellation-card">
 
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Intentos</th>
-                        <th>Último hash</th>
-                        <th>Estado</th>
-                        <th>Altura</th>
-                        <th>Mempool</th>
-                        <th>Saldo disp.</th>
-                        <th>Saldo pend.</th>
-                        <th>Válida</th>
-                    </tr>
-                </thead>
+                <div class="card-head">
+                    <span class="card-label">Red · constelación</span>
+                    <span
+                        id="constellation-meta"
+                        class="card-meta"
+                    >idle</span>
+                </div>
 
-                <tbody id="nodes-body"></tbody>
+                <div id="constellation" class="constellation"></div>
 
-            </table>
+            </div>
+
+
+            <div class="chart-card">
+
+                <div class="card-head">
+                    <span class="card-label">Intentos por nodo</span>
+                    <span class="card-meta">live · 400 ms</span>
+                </div>
+
+                <div id="race-chart" class="race-chart"></div>
+
+                <div id="chart-empty" class="empty-state">
+                    <span>Sin datos de minería todavía</span>
+                </div>
+
+            </div>
 
         </div>
+
+
+        <details class="detail-view">
+
+            <summary>
+                <span class="detail-title">Ver datos</span>
+                <span class="detail-hint">tabla detallada de nodos</span>
+            </summary>
+
+            <div class="table-wrap">
+
+                <table class="data-table" id="nodes-table">
+
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Intentos</th>
+                            <th>Último hash</th>
+                            <th>Estado</th>
+                            <th>Altura</th>
+                            <th>Mempool</th>
+                            <th>Saldo disp.</th>
+                            <th>Saldo pend.</th>
+                            <th>Válida</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="nodes-body"></tbody>
+
+                </table>
+
+            </div>
+
+        </details>
 
     </section>
 
@@ -399,57 +448,101 @@
         </div>
 
 
-        <div class="table-wrap">
+        <div id="chain-row" class="chain-row">
 
-            <table class="data-table" id="chain-table">
+            {% for b in chain_view %}
 
-                <thead>
-                    <tr>
-                        <th>Altura</th>
-                        <th>Hash</th>
-                        <th>Prev hash</th>
-                        <th>Minero</th>
-                        <th>Txs</th>
-                    </tr>
-                </thead>
+                <article
+                    class="block-card
+                        {{ 'block-tip' if loop.last }}
+                        {{ 'block-invalid' if not b.valid }}"
+                    data-index="{{ b.index }}"
+                >
 
-                <tbody id="chain-body">
+                    <header class="block-head">
 
-                    {% for block in chain %}
+                        <span class="block-index">
+                            {% if b.is_genesis %}
+                                Génesis
+                            {% else %}
+                                #{{ b.index }}
+                            {% endif %}
+                        </span>
 
-                        <tr>
-                            <td>
-                                {% if loop.first %}
-                                    GÉNESIS
+                        <span class="block-tag">
+                            d{{ b.difficulty }}
+                        </span>
+
+                    </header>
+
+
+                    <dl class="block-fields">
+
+                        <div class="field">
+                            <dt>hash</dt>
+                            <dd>
+                                <code
+                                    class="hash"
+                                    data-hash="{{ b.hash }}"
+                                    title="{{ b.hash }}"
+                                >{{ b.hash[:10] }}…</code>
+                            </dd>
+                        </div>
+
+
+                        <div class="field">
+                            <dt>prev</dt>
+                            <dd>
+                                {% if b.is_genesis %}
+                                    <code class="hash-muted">—</code>
                                 {% else %}
-                                    {{ loop.index0 }}
+                                    <code
+                                        class="hash"
+                                        data-hash="{{ b.prev_hash }}"
+                                        title="{{ b.prev_hash }}"
+                                    >{{ b.prev_hash[:10] }}…</code>
                                 {% endif %}
-                            </td>
+                            </dd>
+                        </div>
 
-                            <td>
-                                <code>{{ block.hash[:8] }}…</code>
-                            </td>
 
-                            <td>
-                                <code>
-                                    {{ block.header.prev_hash[:8] }}…
-                                </code>
-                            </td>
+                        <div class="field">
+                            <dt>minero</dt>
+                            <dd>{{ b.miner or '—' }}</dd>
+                        </div>
 
-                            <td>
-                                {{ block.header.miner or "—" }}
-                            </td>
 
-                            <td>
-                                {{ block.transactions|length }}
-                            </td>
-                        </tr>
+                        <div class="field">
+                            <dt>txs</dt>
+                            <dd>{{ b.tx_count }}</dd>
+                        </div>
 
-                    {% endfor %}
+                    </dl>
 
-                </tbody>
+                </article>
 
-            </table>
+
+                {% if not loop.last %}
+
+                    <span class="chain-arrow" aria-hidden="true">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path d="M5 12h14" />
+                            <path d="m13 6 6 6-6 6" />
+                        </svg>
+
+                    </span>
+
+                {% endif %}
+
+            {% endfor %}
 
         </div>
 
@@ -483,6 +576,7 @@
 
 
 <script
+    type="module"
     src="{{ url_for('static', filename='app.js') }}"
 ></script>
 
