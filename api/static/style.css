@@ -7,36 +7,32 @@
    so a restyle is one line per role instead of a file-wide hunt.
    ========================================================= */
 
-/* Self-hosted fonts (no CDN). Path note: url() is resolved relative to THIS
-   stylesheet's own URL. The stylesheet is served at /static/style.css, so
-   "fonts/x.woff2" resolves to /static/fonts/x.woff2. Do NOT rewrite these to
-   "../fonts/..." — that would escape to /fonts/ and 404.
-
-   Libron is a third-party OFL font (github.com/nicoverbruggen/libron, v0.30)
-   not published on npm/@fontsource, so its woff2 files are committed straight
-   into api/static/fonts/. JetBrains Mono stays npm-generated via build:fonts. */
+/* Self-hosted fonts (no CDN). Files live in api/static/fonts/ and are copied
+   there by `bun run build:fonts`. Path note: url() is resolved relative to
+   THIS stylesheet's own URL. The stylesheet is served at /static/style.css,
+   so "fonts/x.woff2" resolves to /static/fonts/x.woff2. Do NOT rewrite these
+   to "../fonts/..." — that would escape to /fonts/ and 404. */
 @font-face {
-    font-family: "Libron";
+    font-family: "Inter";
     font-style: normal;
-    font-weight: 400;
+    font-weight: 100 900;
     font-display: swap;
-    src: url("fonts/Libron-Regular.woff2") format("woff2");
+    src: url("fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
+        U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+        U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
-    font-family: "Libron";
-    font-style: italic;
-    font-weight: 400;
-    font-display: swap;
-    src: url("fonts/Libron-Italic.woff2") format("woff2");
-}
-
-@font-face {
-    font-family: "Libron";
+    font-family: "Space Grotesk";
     font-style: normal;
-    font-weight: 700;
+    font-weight: 300 700;
     font-display: swap;
-    src: url("fonts/Libron-Bold.woff2") format("woff2");
+    src: url("fonts/space-grotesk-latin-wght-normal.woff2")
+        format("woff2-variations");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
+        U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+        U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
@@ -57,40 +53,24 @@
 /* ----------------------------------------------------- */
 
 :root {
-    /* ── Deep blue & tan ── 4 anchor colors from the brief ── */
-    --sand: #e1b382;        /* Sand Tan        */
-    --sand-shadow: #c89666; /* Sand Tan Shadow */
-    --night: #2d545e;       /* Night Blue      */
-    --night-shadow: #12343b;/* Night Blue Shadow */
+    --bg: #090d16;
+    --panel: #111827;
+    --panel-2: #151e2e;
+    --border: #263247;
+    --hairline: rgba(255, 255, 255, .06);
 
-    /* derived sand tints for layering/depth (kept in the same warm family) */
-    --bg: #e1b382;
-    --panel: #f2dcbd;
-    --panel-2: #e7c59c;
-    --border: #c89666;
-    --hairline: rgba(18, 52, 59, .14);
+    --text: #f8fafc;
+    --muted: #8fa0b8;
 
-    --text: #12343b;
-    --muted: #2d545e;
+    --accent: #71a7ff;
+    --accent-2: #9b87f5;
+    --success: #4ade80;
+    --danger: #fb7185;
+    --warning: #fbbf24;
 
-    --accent: #12343b;
-    --accent-2: #2d545e;
-    --success: #2f6b4f;
-    --danger: #a8432c;
-    --warning: #b06a1f;
-
-    /* rgb channels so alpha tints stay in-palette (rgba(var(--x-rgb), a)) */
-    --accent-rgb: 18, 52, 59;
-    --accent-2-rgb: 45, 84, 94;
-    --text-rgb: 18, 52, 59;
-    --panel-rgb: 242, 220, 189;
-    --sand-rgb: 225, 179, 130;
-    --success-rgb: 47, 107, 79;
-    --danger-rgb: 168, 67, 44;
-    --warning-rgb: 176, 106, 31;
-
-    --font-display: "Libron", Georgia, "Times New Roman", serif;
-    --font-ui: "Libron", Georgia, "Times New Roman", serif;
+    --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --font-ui: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+        Roboto, sans-serif;
     --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo,
         Consolas, monospace;
 
@@ -106,12 +86,9 @@
     --radius-base: 12px;
     --radius-pill: 999px;
 
-    --shadow-card: 0 1px 2px rgba(18, 52, 59, .10),
-        0 10px 26px rgba(18, 52, 59, .16);
-    --shadow-raise: inset 0 1px 0 rgba(255, 255, 255, .55);
-    --shadow-inset: inset 0 1px 3px rgba(18, 52, 59, .16);
-    --shadow-glow: 0 0 0 1px rgba(18, 52, 59, .28),
-        0 10px 28px rgba(18, 52, 59, .22);
+    --shadow-card: 0 10px 30px rgba(0, 0, 0, .35);
+    --shadow-glow: 0 0 0 1px rgba(113, 167, 255, .28),
+        0 0 24px rgba(113, 167, 255, .16);
 
     --ease: cubic-bezier(.2, .7, .2, 1);
 }
@@ -123,7 +100,7 @@
 /* ----------------------------------------------------- */
 
 :root {
-    --role-network-link: rgba(45, 84, 94, .28);
+    --role-network-link: rgba(113, 167, 255, .18);
     --role-network-link-hot: var(--accent);
     --role-node-idle: var(--muted);
     --role-node-mining: var(--warning);
@@ -135,7 +112,7 @@
     --role-balance-available: var(--success);
     --role-balance-pending: var(--warning);
     --role-badge-seal: var(--accent-2);
-    --role-hairline: rgba(18, 52, 59, .12);
+    --role-hairline: rgba(255, 255, 255, .06);
 }
 
 
@@ -150,11 +127,12 @@
 body {
     margin: 0;
     background:
-        radial-gradient(1200px 620px at 50% -8%, #f6e5c8 0, transparent 55%),
-        radial-gradient(900px 520px at 100% 0, rgba(200, 150, 102, .55) 0,
-            transparent 60%),
-        linear-gradient(180deg, #e6bd90 0, #e1b382 42%, #d8a877 100%);
-    background-attachment: fixed;
+        radial-gradient(
+            circle at top right,
+            #152447 0,
+            transparent 35%
+        ),
+        var(--bg);
 
     color: var(--text);
 
@@ -166,7 +144,7 @@ body {
     text-rendering: optimizeLegibility;
 }
 
-/* CSS-only noise texture (SVG data URI) breaks the flat sand field. */
+/* CSS-only noise texture (SVG data URI) breaks the flat dark field. */
 body::before {
     content: "";
     position: fixed;
@@ -175,8 +153,7 @@ body::before {
 
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 
-    opacity: .05;
-    mix-blend-mode: multiply;
+    opacity: .02;
     pointer-events: none;
 }
 
@@ -236,8 +213,8 @@ code,
     border: 1px solid var(--border);
     border-radius: var(--radius-card);
 
-    background: rgba(var(--panel-rgb), .55);
-    box-shadow: var(--shadow-card), var(--shadow-raise);
+    background: rgba(17, 24, 39, .55);
+    box-shadow: var(--shadow-card);
 
     margin-bottom: 24px;
 }
@@ -263,10 +240,10 @@ code,
 .mode-chip {
     padding: 6px 11px;
 
-    border: 1px solid rgba(var(--accent-rgb), .35);
+    border: 1px solid rgba(113, 167, 255, .35);
     border-radius: var(--radius-pill);
 
-    background: rgba(var(--accent-rgb), .10);
+    background: #16233a;
     color: var(--accent);
 
     font-family: var(--font-mono);
@@ -323,14 +300,14 @@ h1 span {
 
 .chain-status.valid {
     color: var(--success);
-    border-color: rgba(var(--success-rgb), .4);
-    background: rgba(var(--success-rgb), .08);
+    border-color: rgba(74, 222, 128, .4);
+    background: rgba(74, 222, 128, .08);
 }
 
 .chain-status.invalid {
     color: var(--danger);
-    border-color: rgba(var(--danger-rgb), .4);
-    background: rgba(var(--danger-rgb), .08);
+    border-color: rgba(251, 113, 133, .4);
+    background: rgba(251, 113, 133, .08);
 }
 
 .conn {
@@ -363,9 +340,9 @@ h1 span {
 .summary-card,
 .panel {
     border: 1px solid var(--border);
-    background: rgba(var(--panel-rgb), .82);
+    background: rgba(17, 24, 39, .82);
     backdrop-filter: blur(15px);
-    box-shadow: var(--shadow-card), var(--shadow-raise);
+    box-shadow: var(--shadow-card);
 }
 
 .summary-card {
@@ -416,8 +393,8 @@ h1 span {
 
     padding: 14px 16px;
 
-    background: rgba(var(--panel-rgb), .6);
-    box-shadow: var(--shadow-card), var(--shadow-raise);
+    background: rgba(17, 24, 39, .6);
+    box-shadow: var(--shadow-card);
 }
 
 .stat-label {
@@ -583,7 +560,7 @@ h1 span {
 
 .has-tip {
     cursor: help;
-    text-decoration: underline dotted rgba(var(--accent-2-rgb), .5);
+    text-decoration: underline dotted rgba(143, 160, 184, .5);
     text-underline-offset: 3px;
 }
 
@@ -615,10 +592,10 @@ h1 span {
     padding: 0 6px;
     margin: 0 0 6px;
 
-    border: 1px solid rgba(var(--accent-rgb), .45);
+    border: 1px solid rgba(113, 167, 255, .45);
     border-radius: 8px;
 
-    background: rgba(var(--accent-rgb), .07);
+    background: rgba(113, 167, 255, .07);
     color: var(--accent);
 
     font-family: var(--font-mono);
@@ -630,7 +607,7 @@ h1 span {
 .pill {
     padding: 7px 12px;
     border-radius: var(--radius-pill);
-    background: rgba(var(--accent-rgb), .10);
+    background: #1d2940;
     color: var(--accent);
 
     font-size: 11px;
@@ -687,8 +664,8 @@ h1 span {
 
     padding: 14px 16px;
 
-    background: rgba(var(--accent-rgb), .03);
-    box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), .06);
+    background: rgba(255, 255, 255, .012);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .04);
 }
 
 .config-grid .field-label {
@@ -826,13 +803,13 @@ h1 span {
 /* Declaration paper — reads like a document, not a widget */
 
 .transaction-form.paper {
-    border: 1px solid rgba(var(--accent-rgb), .06);
+    border: 1px solid rgba(255, 255, 255, .04);
     border-radius: var(--radius-base);
 
     padding: 24px;
 
-    background: rgba(var(--accent-rgb), .03);
-    box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), .06);
+    background: rgba(255, 255, 255, .012);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .04);
 }
 
 input,
@@ -843,7 +820,7 @@ textarea {
     border: 1px solid var(--border);
     border-radius: var(--radius-base);
 
-    background: var(--panel);
+    background: #0c1320;
     color: var(--text);
 
     padding: 13px 14px;
@@ -851,8 +828,8 @@ textarea {
     outline: none;
 
     box-shadow:
-        inset 0 1px 2px rgba(18, 52, 59, .18),
-        inset 0 0 0 1px rgba(var(--accent-rgb), .04);
+        inset 0 1px 2px rgba(0, 0, 0, .45),
+        inset 0 0 0 1px rgba(255, 255, 255, .02);
 
     font-family: inherit;
     font-size: 14px;
@@ -874,8 +851,8 @@ textarea:focus {
     border-color: var(--accent);
 
     box-shadow:
-        inset 0 1px 2px rgba(18, 52, 59, .18),
-        0 0 0 2px rgba(var(--accent-rgb), .35);
+        inset 0 1px 2px rgba(0, 0, 0, .45),
+        0 0 0 2px rgba(113, 167, 255, .35);
 }
 
 button {
@@ -949,15 +926,15 @@ button:disabled {
     border-top-color: var(--accent-2);
 
     background: var(--accent);
-    color: var(--panel);
+    color: #08111f;
 }
 
 .btn-primary:hover:not(:disabled) {
     border-color: var(--accent-2);
 
     box-shadow:
-        0 0 0 2px rgba(var(--accent-rgb), .4),
-        0 8px 20px rgba(var(--accent-rgb), .22);
+        0 0 0 2px rgba(113, 167, 255, .4),
+        0 8px 20px rgba(113, 167, 255, .22);
 }
 
 .btn-ghost {
@@ -969,7 +946,7 @@ button:disabled {
 
 .btn-ghost:hover:not(:disabled) {
     border-color: var(--accent);
-    background: rgba(var(--accent-rgb), .04);
+    background: rgba(113, 167, 255, .04);
 }
 
 .btn-icon {
@@ -987,7 +964,7 @@ button:disabled {
 .btn-icon:hover:not(:disabled) {
     border-color: var(--border);
 
-    background: rgba(var(--accent-rgb), .04);
+    background: rgba(113, 167, 255, .04);
     color: var(--accent);
 }
 
@@ -1012,10 +989,10 @@ button:disabled {
     align-items: center;
     gap: 6px;
 
-    border: 1px solid rgba(var(--accent-rgb), .3);
+    border: 1px solid rgba(113, 167, 255, .3);
     border-radius: 9px 3px 9px 3px;
 
-    background: rgba(var(--accent-rgb), .10);
+    background: #16233a;
     color: var(--role-badge-seal);
 
     padding: 5px 9px;
@@ -1050,7 +1027,7 @@ button:disabled {
 
     border: 1px solid var(--border);
     border-radius: 14px;
-    background: var(--panel);
+    background: #0c1320;
     padding: var(--space-4);
 
     margin-bottom: var(--space-4);
@@ -1080,7 +1057,7 @@ button:disabled {
 }
 
 .node-ring {
-    fill: var(--panel);
+    fill: #0c1320;
     stroke: var(--role-node-idle);
     stroke-width: 2;
     transition: stroke .2s var(--ease), stroke-width .2s var(--ease);
@@ -1125,7 +1102,7 @@ button:disabled {
 }
 
 .anchor-ring {
-    fill: var(--panel);
+    fill: #0c1320;
     stroke: var(--border);
     stroke-width: 1.5;
     stroke-dasharray: 3 3;
@@ -1167,7 +1144,7 @@ button:disabled {
 
     border-radius: 14px;
     border: 1px solid var(--border);
-    background: var(--panel);
+    background: #0c1320;
 }
 
 .compact-table tbody td {
@@ -1183,7 +1160,7 @@ button:disabled {
 
 .compact-table tbody tr:hover {
     box-shadow: inset 3px 0 0 var(--accent);
-    background: rgba(var(--accent-rgb), .03);
+    background: rgba(113, 167, 255, .03);
 }
 
 .compact-table tr.winner-row {
@@ -1298,7 +1275,7 @@ button:disabled {
 
     border-radius: 14px;
     border: 1px solid var(--border);
-    background: var(--panel);
+    background: #0c1320;
 }
 
 .data-table {
@@ -1312,7 +1289,7 @@ button:disabled {
 
     padding: 12px 14px;
 
-    background: var(--panel-2);
+    background: #0b101c;
 
     color: var(--muted);
     font-size: 10px;
@@ -1339,7 +1316,7 @@ button:disabled {
 }
 
 .data-table tr.winner-row {
-    background: rgba(var(--success-rgb), .08);
+    background: rgba(74, 222, 128, .08);
     box-shadow: inset 3px 0 0 var(--success);
 }
 
@@ -1402,7 +1379,7 @@ button:disabled {
 
     border: 1px solid var(--border);
     border-radius: 14px;
-    background: var(--panel);
+    background: #0c1320;
 
     padding: var(--space-4);
 
@@ -1418,7 +1395,7 @@ button:disabled {
 
 .block-card.block-invalid {
     border: 2px solid var(--role-block-invalid);
-    background: rgba(var(--danger-rgb), .05);
+    background: rgba(251, 113, 133, .05);
 }
 
 .block-warn {
@@ -1456,7 +1433,7 @@ button:disabled {
 .block-tag {
     padding: 3px 7px;
     border-radius: 6px;
-    background: rgba(var(--accent-rgb), .10);
+    background: #1d2940;
 
     color: var(--accent);
     font-family: var(--font-mono);
@@ -1568,8 +1545,8 @@ button:disabled {
 
     border-radius: 10px;
 
-    background: rgba(var(--danger-rgb), .1);
-    border: 1px solid rgba(var(--danger-rgb), .35);
+    background: rgba(251, 113, 133, .1);
+    border: 1px solid rgba(251, 113, 133, .35);
 
     color: var(--danger);
     font-size: 13px;
@@ -1580,9 +1557,9 @@ button:disabled {
 }
 
 .form-error {
-    color: var(--danger);
-    background: rgba(var(--danger-rgb), .08);
-    border-left: 3px solid var(--danger);
+    color: #f87171;
+    background: rgba(248, 113, 113, .08);
+    border-left: 3px solid #f87171;
     padding: 8px 12px;
     border-radius: 4px;
     margin-top: var(--space-2);
@@ -1602,7 +1579,7 @@ button:disabled {
 
     border-radius: var(--radius-base);
     border: 1px solid var(--border);
-    background: var(--panel);
+    background: #0c1320;
 
     font-family: var(--font-mono);
     font-size: 12px;
@@ -1622,7 +1599,7 @@ button:disabled {
 }
 
 .log-time {
-    color: var(--muted);
+    color: #6c7c96;
     flex-shrink: 0;
 }
 
@@ -1632,7 +1609,7 @@ button:disabled {
 }
 
 .log-msg {
-    color: var(--text);
+    color: #bac8dc;
     word-break: break-word;
 }
 
@@ -1658,7 +1635,7 @@ button:disabled {
 
     border-radius: var(--radius-base);
     border: 1px solid var(--border);
-    background: var(--panel);
+    background: #0c1320;
 
     color: var(--muted);
     font-size: 12px;
@@ -1676,7 +1653,7 @@ button:disabled {
 
     border-radius: var(--radius-base);
     border: 1px solid var(--border);
-    background: var(--panel);
+    background: #0c1320;
 
     color: var(--accent);
 
@@ -1710,20 +1687,20 @@ button:disabled {
 
 .message.success {
     color: var(--success);
-    background: rgba(var(--success-rgb), .06);
-    border-color: rgba(var(--success-rgb), .25);
+    background: rgba(74, 222, 128, .06);
+    border-color: rgba(74, 222, 128, .25);
 }
 
 .message.error {
     color: var(--danger);
-    background: rgba(var(--danger-rgb), .06);
-    border-color: rgba(var(--danger-rgb), .25);
+    background: rgba(251, 113, 133, .06);
+    border-color: rgba(251, 113, 133, .25);
 }
 
 .message.warning {
     color: var(--warning);
-    background: rgba(var(--warning-rgb), .06);
-    border-color: rgba(var(--warning-rgb), .25);
+    background: rgba(251, 191, 36, .06);
+    border-color: rgba(251, 191, 36, .25);
 }
 
 
