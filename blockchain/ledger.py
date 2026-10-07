@@ -7,7 +7,8 @@ import sys
 REWARD = 50.0
 
 
-def compute_balances(chain: list, maturity: int = 6) -> dict:
+def compute_balances(chain: list, maturity: int = 6,
+                     bootstrap: dict | None = None) -> dict:
     """Return {address: {"available", "pending", "sent", "received"}}.
 
     Block at index h (genesis=0) rewards its miner with REWARD. The
@@ -40,6 +41,13 @@ def compute_balances(chain: list, maturity: int = 6) -> dict:
             b(tx.sender)["sent"] += tx.amount
             b(tx.receiver)["received"] += tx.amount
 
+    if bootstrap:
+        for addr, amt in bootstrap.items():
+            if amt <= 0:
+                continue
+            entry = b(addr)
+            entry["received"] += amt
+
     for addr, d in bal.items():
         raw = d["received"] + matured[addr] - d["sent"]
         if raw < 0:
@@ -51,7 +59,8 @@ def compute_balances(chain: list, maturity: int = 6) -> dict:
     return bal
 
 
-def available_of(address: str, chain: list, maturity: int = 6) -> float:
+def available_of(address: str, chain: list, maturity: int = 6,
+                 bootstrap: dict | None = None) -> float:
     """Return the available balance of `address`, or 0.0 if unknown."""
-    entry = compute_balances(chain, maturity).get(address)
+    entry = compute_balances(chain, maturity, bootstrap).get(address)
     return entry["available"] if entry else 0.0

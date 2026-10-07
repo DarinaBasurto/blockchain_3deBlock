@@ -27,14 +27,17 @@ class Node:
         self.network: "Network | None" = None
         self.chain: list[Block] = [self._genesis()]
         self.mempool: list[Transaction] = []
+        self.bootstrap_balance: dict = {}
 
     # ---------------- saldos ----------------
 
     def balance_of(self, address: str) -> float:
-        return available_of(address, self.chain)
+        return available_of(address, self.chain,
+                            bootstrap=self.bootstrap_balance)
 
     def pending_of(self, address: str) -> float:
-        entry = compute_balances(self.chain).get(address)
+        entry = compute_balances(self.chain,
+                                 bootstrap=self.bootstrap_balance).get(address)
         return entry["pending"] if entry else 0.0
 
     def can_spend(self, address: str, amount: float) -> bool:

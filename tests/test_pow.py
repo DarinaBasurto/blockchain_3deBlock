@@ -18,12 +18,16 @@ def test_pow_two_winners_tie_breaking(fresh_network):
     assert pick_winner([]) is None
 
 
-@pytest.mark.xfail(reason="state_lock and /minar guards not yet in repo")
+@pytest.mark.xfail(reason="requires live mining thread")
 def test_concurrent_mining_request_rejected(flask_client):
-    """POW-02: solicitar minado concurrente (carrera ya en progreso)."""
-    r = flask_client.post("/minar")
+    """POW-02: solicitar minado concurrente es rechazado con 409."""
+    r1 = flask_client.post("/minar")
+    assert r1.status_code in (200, 302)
     r2 = flask_client.post("/minar")
-    assert r2.status_code in (400, 409)
+    assert r2.status_code == 409
+    body = r2.get_json()
+    assert body["ok"] is False
+    assert "en curso" in body["error"].lower()
 
 
 @pytest.mark.xfail(reason="stop_event cancellation loop not implemented in testable way")

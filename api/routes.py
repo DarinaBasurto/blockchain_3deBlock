@@ -83,6 +83,14 @@ def rebuild_network(num_nodes: int, difficulty: int) -> None:
             fresh_network.register(n)
             fresh_nodes.append(n)
 
+        # Bootstrap: N0 starts with 500 units so the PoS demo can run
+        # without a prior mining round. The map is shared identically
+        # across all nodes so mutual validation stays consistent.
+        # Real chains do this via genesis distribution or faucets.
+        bootstrap = {"N0": 500.0}
+        for node in fresh_nodes:
+            node.bootstrap_balance = dict(bootstrap)
+
         fresh_stats = {
             n.node_id: {
                 "attempts": 0,
@@ -510,6 +518,12 @@ def register_routes(app):
     def mine():
 
         with state_lock:
+            if mining_state["mining"]:
+                log_event("mine_rejected", "Carrera ya en curso")
+                return jsonify({
+                    "ok": False,
+                    "error": "Una carrera de minería ya está en curso."
+                }), 409
             is_mining = mining_state["mining"]
             has_mempool = bool(nodes[0].mempool)
 

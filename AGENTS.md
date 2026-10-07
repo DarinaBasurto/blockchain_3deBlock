@@ -18,6 +18,15 @@
 
 8. PoW tie-break: candidates are compared via `blockchain.consensus.pow.pick_winner()`, which returns the pair with the lexicographically smallest `block.hash`. In practice the simulator uses a first-wins strategy (the first worker to acquire `winner_lock` appends its candidate and sets `stop_event`); `pick_winner()` is called with the current candidate list so the rule is encoded and testable in isolation. A true simultaneous-arrival grace window was considered and rejected as unnecessarily fragile for a didactic simulator.
 
+9. PoS bootstrap: every Node is initialized with
+   node.bootstrap_balance = {'N0': 500.0}. This injects 500 units
+   of received balance into the ledger for N0 only, shared identically
+   across all nodes so validation is consistent. It is a simulator
+   convenience to make PoS demonstrable without a prior PoW round.
+   Real blockchains achieve the same effect via genesis distribution
+   or faucets. Signature change to compute_balances(..., bootstrap=None)
+   is backwards compatible.
+
 ## 1. Resumen del proyecto
 
 Blockchain didáctica con Proof-of-Work, carrera de minería multihilo entre 4 nodos, y UI web Flask para simular declaraciones patrimoniales.
