@@ -115,10 +115,10 @@
         </div>
 
 
-        <div class="config-grid">
+        <div class="config-grid control-strip">
 
-            <label>
-                Modo
+            <label class="field">
+                <span class="field-label">Modo</span>
 
                 <select id="cfg-mode">
                     <option value="pow">pow</option>
@@ -127,8 +127,8 @@
             </label>
 
 
-            <label>
-                Nodos (10–20)
+            <label class="field">
+                <span class="field-label">Nodos</span>
 
                 <input
                     id="cfg-nodes"
@@ -137,12 +137,13 @@
                     max="20"
                     step="1"
                     value="10"
+                    title="Entre 10 y 20"
                 >
             </label>
 
 
-            <label>
-                Dificultad (3–5)
+            <label class="field">
+                <span class="field-label">Dificultad</span>
 
                 <input
                     id="cfg-diff"
@@ -151,6 +152,7 @@
                     max="5"
                     step="1"
                     value="4"
+                    title="Entre 3 y 5"
                 >
             </label>
 
@@ -193,7 +195,20 @@
                 <h2>Crear transacción</h2>
             </div>
 
-            <span class="pill">
+            <span class="seal">
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <rect x="4" y="10" width="16" height="10" rx="2"></rect>
+                    <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+                </svg>
+
                 Ed25519
             </span>
 
@@ -204,25 +219,25 @@
             id="tx-form"
             action="/transaccion"
             method="POST"
-            class="transaction-form"
+            class="transaction-form paper"
         >
 
-            <label>
-                Remitente
+            <label class="field">
+                <span class="field-label">Remitente</span>
 
                 <select name="sender" id="tx-sender"></select>
             </label>
 
 
-            <label>
-                Destinatario
+            <label class="field">
+                <span class="field-label">Destinatario</span>
 
                 <select name="receiver" id="tx-receiver"></select>
             </label>
 
 
-            <label>
-                Monto
+            <label class="field">
+                <span class="field-label">Monto</span>
 
                 <input
                     type="number"
@@ -235,8 +250,8 @@
             </label>
 
 
-            <label>
-                Tipo de declaración
+            <label class="field">
+                <span class="field-label">Tipo</span>
 
                 <select name="tipo_declaracion">
                     <option value="inicial">inicial</option>
@@ -246,8 +261,8 @@
             </label>
 
 
-            <label>
-                Ejercicio (año)
+            <label class="field">
+                <span class="field-label">Ejercicio</span>
 
                 <input
                     type="number"
@@ -258,18 +273,32 @@
             </label>
 
 
-            <label class="wide">
-                Documento (opcional)
+            <label class="field">
+                <span class="field-label">Documento</span>
 
                 <textarea
                     name="documento"
                     rows="2"
-                    placeholder="Se guarda solo su hash SHA-256"
+                    placeholder="Se guarda su hash SHA-256"
                 ></textarea>
             </label>
 
 
-            <button class="primary-button" type="submit">
+            <button class="primary-button submit-button" type="submit">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                </svg>
+
                 Firmar y enviar
             </button>
 
