@@ -691,10 +691,82 @@
 
 
     // -----------------------------------------------------
+    // FORM · /transaccion (JSON, inline errors)
+    // -----------------------------------------------------
+
+    async function submitTransaction(event) {
+
+        event.preventDefault();
+
+        const form = event.currentTarget;
+        const errorEl = $("tx-error");
+
+        if (errorEl) {
+            errorEl.hidden = true;
+            errorEl.textContent = "";
+        }
+
+        const formData = new FormData(form);
+
+        try {
+
+            const res = await fetch("/transaccion", {
+                method: "POST",
+                headers: { "Accept": "application/json" },
+                body: formData,
+            });
+
+            if (res.ok) {
+
+                if (errorEl) {
+                    errorEl.hidden = true;
+                    errorEl.textContent = "";
+                }
+
+                fetchEstado();
+                return;
+            }
+
+            let message = "No se pudo enviar la transacción.";
+
+            try {
+
+                const data = await res.json();
+
+                if (data && data.error) {
+                    message = data.error;
+                }
+            }
+            catch (parseErr) {
+                // keep the default message
+            }
+
+            if (errorEl) {
+                errorEl.textContent = message;
+                errorEl.hidden = false;
+            }
+        }
+        catch (err) {
+
+            if (errorEl) {
+                errorEl.textContent = "Error de red: " + err.message;
+                errorEl.hidden = false;
+            }
+        }
+    }
+
+
+    // -----------------------------------------------------
     // INIT
     // -----------------------------------------------------
 
     function init() {
+
+        const txForm = $("tx-form");
+
+        if (txForm) {
+            txForm.addEventListener("submit", submitTransaction);
+        }
 
         const applyBtn = $("cfg-apply");
 

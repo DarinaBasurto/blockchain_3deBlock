@@ -638,3 +638,12 @@ code {
         grid-column: auto;
     }
 }
+.form-error {
+    color: #f87171;
+    background: rgba(248, 113, 113, 0.08);
+    border-left: 3px solid #f87171;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-top: 8px;
+    font-size: 0.9rem;
+}

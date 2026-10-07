@@ -74,10 +74,11 @@ def rebuild_network(num_nodes: int, difficulty: int) -> None:
     with state_lock:
         fresh_network = Network()
         fresh_nodes = []
+        fresh_wallets = {f"N{i}": Wallet() for i in range(num_nodes)}
         for i in range(num_nodes):
             node_id = f"N{i}"
             n = Node(node_id, ProofOfWork(difficulty=difficulty))
-            n.wallet = Wallet()
+            n.wallet = fresh_wallets[node_id]
             n.address = n.wallet.direccion()
             fresh_network.register(n)
             fresh_nodes.append(n)
@@ -96,13 +97,6 @@ def rebuild_network(num_nodes: int, difficulty: int) -> None:
             "mining": False,
             "winner": None,
             "last_block_hash": "",
-        }
-
-        alice = Wallet()
-        bob = Wallet()
-        fresh_wallets = {
-            "Alice": alice,
-            "Bob": bob,
         }
 
         network = fresh_network
@@ -365,70 +359,124 @@ def register_routes(app):
     @app.route("/transaccion", methods=["POST"])
     def create_transaction():
 
-        with state_lock:
-            is_mining = mining_state["mining"]
-
-        if is_mining:
-            flash(
-                "Espera a que termine la minería antes de crear otra transacción.",
-                "warning"
-            )
-            return redirect("/")
-
-        sender_name = request.form["sender"]
-        receiver_name = request.form["receiver"]
-
-        try:
-            amount = float(request.form["amount"])
-        except ValueError:
-            flash("El monto debe ser numérico.", "error")
-            return redirect("/")
-
-        try:
-            ejercicio = int(request.form["ejercicio"])
-        except ValueError:
-            flash("El ejercicio debe ser un año numérico.", "error")
-            return redirect("/")
-
-        data = {
-            "proposito": "declaraciones",
-            "tipo_declaracion": request.form["tipo_declaracion"],
-            "ejercicio": ejercicio,
-            "hash_declaracion": sha256_hex(
-                request.form.get("documento", "")
-            ),
-        }
-
-        with state_lock:
-            sender_wallet = wallets[sender_name]
-            receiver_wallet = wallets[receiver_name]
-
-        tx = Transaction(
-            sender=sender_wallet.direccion(),
-            receiver=receiver_wallet.direccion(),
-            amount=amount,
-            data=data,
+        wants_json = (
+            request.is_json
+            or "application/json" in request.headers.get("Accept", "")
         )
 
-        tx.firmar(sender_wallet)
+        def fail(error):
+            if wants_json:
+                return jsonify({"ok": False, "error": error}), 400
+            flash(error, "error")
+            return redirect("/")
 
-        with state_lock:
-            accepted = nodes[0].submit_transaction(tx)
+        try:
+            with state_lock:
+                is_mining = mining_state["mining"]
 
-        if accepted:
-            log_event("tx", f"{sender_wallet.direccion()} -> {receiver_wallet.direccion()} {amount}")
+            if is_mining:
+                return fail(
+                    "Espera a que termine la minería antes de crear otra transacción."
+                )
+
+            sender_name = request.form.get("sender")
+            receiver_name = request.form.get("receiver")
+
+            with state_lock:
+                if not sender_name or sender_name not in wallets:
+                    return fail(f"Remitente desconocido: {sender_name}")
+                if not receiver_name or receiver_name not in wallets:
+                    return fail(f"Destinatario desconocido: {receiver_name}")
+
+                if sender_name == receiver_name:
+                    return fail(
+                        "El remitente y el destinatario deben ser distintos"
+                    )
+
+                sender_wallet = wallets[sender_name]
+                receiver_wallet = wallets[receiver_name]
+                sender_address = sender_wallet.direccion()
+                node = nodes[0]
+                chain_snapshot = list(node.chain)
+                mempool_snapshot = list(node.mempool)
+
+            try:
+                amount = float(request.form.get("amount"))
+            except (TypeError, ValueError):
+                return fail("El monto debe ser un número no negativo")
+
+            if amount < 0:
+                return fail("El monto debe ser un número no negativo")
+
+            try:
+                ejercicio = int(request.form.get("ejercicio"))
+            except (TypeError, ValueError):
+                return fail("El ejercicio debe ser un número entero")
+
+            tipo = request.form.get("tipo_declaracion")
+
+            if tipo not in {"inicial", "anual", "final"}:
+                return fail("Tipo de declaración inválido")
+
+            data = {
+                "proposito": "declaraciones",
+                "tipo_declaracion": tipo,
+                "ejercicio": ejercicio,
+                "hash_declaracion": sha256_hex(
+                    request.form.get("documento", "")
+                ),
+            }
+
+            if amount > 0 and not node.can_spend(sender_address, amount):
+                return fail(
+                    f"Saldo insuficiente: "
+                    f"{node.balance_of(sender_address):.2f} disponible, "
+                    f"intenta enviar {amount:.2f}"
+                )
+
+            tx = Transaction(
+                sender=sender_address,
+                receiver=receiver_wallet.direccion(),
+                amount=amount,
+                data=data,
+            )
+
+            if viola_regla(tx, chain_snapshot, mempool_snapshot):
+                return fail(
+                    "Ya existe una declaración inicial para ese ejercicio"
+                )
+
+            if any(t.tx_id == tx.tx_id for t in mempool_snapshot):
+                return fail("Transacción duplicada en la mempool")
+
+            tx.firmar(sender_wallet)
+
+            with state_lock:
+                accepted = nodes[0].submit_transaction(tx)
+
+            if not accepted:
+                log_event("tx_rejected", "Transacción rechazada por el nodo")
+                return fail(f"Transacción rechazada: {tx.tx_id[:8]}…")
+
+            log_event(
+                "tx",
+                f"{sender_address} -> "
+                f"{receiver_wallet.direccion()} {amount}"
+            )
+
+            if wants_json:
+                return jsonify({"ok": True, "tx_id": tx.tx_id})
+
             flash(
                 "Transacción firmada y enviada a la red.",
                 "success"
             )
-        else:
-            log_event("tx_rejected", "Transacción rechazada por el nodo")
-            flash(
-                "La transacción fue rechazada.",
-                "error"
-            )
 
-        return redirect("/")
+            return redirect("/")
+
+        except Exception as e:
+            log_event("tx_rejected", str(e))
+            return jsonify({"ok": False, "error": f"Error interno: {e}"}), 400
 
     # -----------------------------------------------------
     # Iniciar minería
