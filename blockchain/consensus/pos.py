@@ -167,6 +167,11 @@ class ProofOfStake(Consensus):
     Valida la estructura del bloque sin exigir
     la dificultad de minería de Proof of Work.
     """
+    def __init__(self):
+        self.approved_blocks = set()
+
+    def approve_block(self, block_hash: str):
+        self.approved_blocks.add(block_hash)
 
     def prepare_block(
         self,
@@ -183,7 +188,10 @@ class ProofOfStake(Consensus):
         block: Block,
         chain: list[Block]
     ) -> bool:
-
+        
+        # Solo aceptar bloques aprobados por la votación PoS
+        if block.hash not in self.approved_blocks:
+            return False
         # Comprobar que el hash no fue alterado
         if block.hash != block.compute_hash():
             return False

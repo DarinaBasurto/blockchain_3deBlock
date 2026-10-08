@@ -72,6 +72,24 @@ def validate_config(num_nodes, difficulty, mode) -> tuple[bool, str]:
         return False, "mode debe ser 'pow' o 'pos'"
     return True, ""
 
+def register_pos_approval(block_hash: str, current_nodes: list) -> bool:
+    """
+    Registra una aprobación PoS en todos los nodos.
+    Solo debe llamarse después de verificar la votación.
+    """
+    if not current_nodes:
+        return False
+
+    if not all(
+        isinstance(n.consensus, ProofOfStake)
+        for n in current_nodes
+    ):
+        return False
+
+    for n in current_nodes:
+        n.consensus.approve_block(block_hash)
+
+    return True
 
 def rebuild_network(num_nodes: int, difficulty: int) -> None:
     global network, nodes, wallets, mining_state, node_stats, stop_event
@@ -669,7 +687,7 @@ def register_routes(app):
         proposer = round_.sortition()
         proposer_id = proposer.id if proposer else None
         A = sum(v.stake for v in round_.validators)
-                # Crear un bloque candidato PoS
+        # Crear un bloque candidato PoS
         proposer_node = next(
             (n for n in current_nodes if n.node_id == proposer_id),
             None
@@ -771,6 +789,76 @@ def register_routes(app):
                 "threshold_met": accepted
             })
 
+    @app.route("/pos_finalize", methods=["POST"])
+    def pos_finalize():
+        global active_pos_round, active_pos_candidate
+
+        with state_lock:
+            round_ = active_pos_round
+            candidate = active_pos_candidate
+
+            if round_ is None or candidate is None:
+                return jsonify({
+                    "ok": False,
+                    "error": "No hay una ronda PoS activa."
+                }), 400
+
+            if round_.state != "VOTACION":
+                return jsonify({
+                    "ok": False,
+                    "error": "La ronda todavía no tiene votos."
+                }), 400
+
+            if not all(
+                v.id in round_.votes
+                for v in round_.validators
+                if v.stake > 0
+            ):
+                return jsonify({
+                    "ok": False,
+                    "error": "Todavía faltan validadores por votar."
+                }), 400
+
+            accepted, V, A = round_.tally()
+            # Comprobar que el candidato sigue conectado a la cadena
+            if accepted:
+                if not all(
+                    n.chain[-1].hash == candidate.header.prev_hash
+                    for n in nodes
+                ):
+                    return jsonify({
+                        "ok": False,
+                        "error": "La cadena cambió durante la votación."
+                    }), 409
+
+                # Comprobar la estructura antes de aprobar
+                if candidate.hash != candidate.compute_hash():
+                    return jsonify({
+                        "ok": False,
+                        "error": "El hash del candidato no es válido."
+                    }), 400
+
+                # Registrar aprobación en los nodos PoS
+                registered = register_pos_approval(
+                    candidate.hash,
+                    nodes
+                )
+
+                if not registered:
+                    return jsonify({
+                        "ok": False,
+                        "error": "No se pudo registrar la aprobación PoS."
+                    }), 400
+                
+            return jsonify({
+                "ok": True,
+                "accepted": accepted,
+                "candidate_hash": candidate.hash,
+                "V": V,
+                "A": A,
+                "state": "APROBACION_PENDIENTE" if accepted else "RECHAZO_PENDIENTE"
+            })
+        
     @app.route("/estado")
     def status():
 
