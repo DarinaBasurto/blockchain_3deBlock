@@ -19,7 +19,7 @@ from blockchain.node import Node
 from blockchain.consensus.pow import ProofOfWork, pick_winner
 
 
-from blockchain.consensus.pos import PoSRound, Validator
+from blockchain.consensus.pos import PoSRound, Validator, ProofOfStake
 from blockchain.ledger import compute_balances, available_of
 
 
@@ -33,6 +33,10 @@ NUM_NODES = 4
 
 CONFIG = {"num_nodes": 10, "difficulty": 4, "mode": "pow"}
 events = []  # max 200, protected by state_lock
+
+# Guarda la ronda PoS que está en curso
+active_pos_round = None
+
 candidates: list = []  # reset at start of each mining round
 
 
@@ -77,7 +81,11 @@ def rebuild_network(num_nodes: int, difficulty: int) -> None:
         fresh_wallets = {f"N{i}": Wallet() for i in range(num_nodes)}
         for i in range(num_nodes):
             node_id = f"N{i}"
-            n = Node(node_id, ProofOfWork(difficulty=difficulty))
+            if CONFIG["mode"] == "pos":
+                consensus = ProofOfStake()
+            else:
+                consensus = ProofOfWork(difficulty=difficulty)
+            n = Node(node_id, consensus)
             n.wallet = fresh_wallets[node_id]
             n.address = n.wallet.direccion()
             fresh_network.register(n)
@@ -87,7 +95,12 @@ def rebuild_network(num_nodes: int, difficulty: int) -> None:
         # without a prior mining round. The map is shared identically
         # across all nodes so mutual validation stays consistent.
         # Real chains do this via genesis distribution or faucets.
-        bootstrap = {"N0": 500.0}
+        # bootstrap = {fresh_nodes[0].address: 500.0}
+        bootstrap = {
+            fresh_nodes[0].address: 500.0,
+            fresh_nodes[1].address: 200.0,
+            fresh_nodes[2].address: 200.0,
+        }
         for node in fresh_nodes:
             node.bootstrap_balance = dict(bootstrap)
 
@@ -170,7 +183,7 @@ def mining_worker(node, node_index, transactions, prev_hash, timestamp):
         timestamp=timestamp,
         difficulty=node.consensus.difficulty,
         nonce=node_index,
-        miner=node.node_id,
+        miner=node.address,
     )
 
     candidate = Block(
@@ -624,6 +637,7 @@ def register_routes(app):
 
     @app.route("/pos_round", methods=["POST"])
     def pos_round():
+        global active_pos_round
         data = request.get_json(silent=True) or {}
         stakes = data.get("stakes", {})
         with state_lock:
@@ -637,7 +651,11 @@ def register_routes(app):
                 n.wallet = Wallet()
                 n.address = n.wallet.direccion()
             addr = n.address
-            bal = available_of(addr, n.chain)
+            bal = available_of(
+                addr,
+                n.chain,
+                bootstrap=n.bootstrap_balance
+            )
             validators.append(Validator(id=n.node_id, address=addr, balance=bal))
 
         round_ = PoSRound(validators, prev_hash=last_hash, block_number=height + 1)
@@ -650,6 +668,8 @@ def register_routes(app):
         proposer = round_.sortition()
         proposer_id = proposer.id if proposer else None
         A = sum(v.stake for v in round_.validators)
+        with state_lock:
+            active_pos_round = round_
 
         return jsonify({
             "ok": True,
@@ -663,6 +683,58 @@ def register_routes(app):
     # -----------------------------------------------------
     # Estado en vivo
     # -----------------------------------------------------
+    @app.route("/pos_vote", methods=["POST"])
+    def pos_vote():
+        global active_pos_round
+
+        data = request.get_json(silent=True) or {}
+        validator_id = data.get("validator_id")
+        yes = data.get("yes")
+
+        if not isinstance(validator_id, str):
+            return jsonify({
+                "ok": False,
+                "error": "Debes indicar un validador."
+            }), 400
+
+        if not isinstance(yes, bool):
+            return jsonify({
+                "ok": False,
+                "error": "El voto debe ser true o false."
+            }), 400
+
+        with state_lock:
+            if active_pos_round is None:
+                return jsonify({
+                    "ok": False,
+                    "error": "No hay una ronda PoS activa."
+                }), 400
+
+            if active_pos_round.state not in ("CANDIDATO", "VOTACION"):
+                return jsonify({
+                    "ok": False,
+                    "error": "La ronda no está en etapa de votación."
+                }), 400
+
+            ok, msg = active_pos_round.vote(validator_id, yes)
+
+            if not ok:
+                return jsonify({
+                    "ok": False,
+                    "error": msg
+                }), 400
+
+            accepted, V, A = active_pos_round.tally()
+
+            return jsonify({
+                "ok": True,
+                "validator_id": validator_id,
+                "vote": yes,
+                "state": active_pos_round.state,
+                "V": V,
+                "A": A,
+                "threshold_met": accepted
+            })
 
     @app.route("/estado")
     def status():
@@ -676,8 +748,10 @@ def register_routes(app):
             log_copy = list(events[-30:])
 
             node_snapshots = []
+
             for node in local_nodes:
                 addr = getattr(node, "address", None)
+
                 if not addr and hasattr(node, "wallet") and node.wallet:
                     addr = node.wallet.direccion()
                     node.address = addr
@@ -685,11 +759,16 @@ def register_routes(app):
                 is_valid = node.is_chain_valid()
 
                 if is_valid:
-                    balances = compute_balances(node.chain)
+                    balances = compute_balances(
+                        node.chain,
+                        bootstrap=node.bootstrap_balance
+                    )
+
                     node_available = (
                         balances.get(addr, {}).get("available", 0.0)
                         if addr else 0.0
                     )
+
                     node_pending = (
                         balances.get(addr, {}).get("pending", 0.0)
                         if addr else 0.0

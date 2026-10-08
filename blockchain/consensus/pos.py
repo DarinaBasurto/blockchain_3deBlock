@@ -1,6 +1,8 @@
 import hashlib
 from dataclasses import dataclass
-
+from .base import Consensus
+from ..block import Block
+from ..merkle import merkle_root
 
 @dataclass
 class Validator:
@@ -157,3 +159,60 @@ class PoSRound:
         if self.slash_rule == "B":
             return min(ap, self.alpha * total_tx_value)
         return ap
+
+class ProofOfStake(Consensus):
+    """
+    Consenso PoS didáctico.
+
+    Valida la estructura del bloque sin exigir
+    la dificultad de minería de Proof of Work.
+    """
+
+    def prepare_block(
+        self,
+        block: Block,
+        chain: list[Block]
+    ) -> Block:
+        block.header.difficulty = 0
+        block.header.nonce = 0
+        block.hash = block.compute_hash()
+        return block
+
+    def validate_block(
+        self,
+        block: Block,
+        chain: list[Block]
+    ) -> bool:
+
+        # Comprobar que el hash no fue alterado
+        if block.hash != block.compute_hash():
+            return False
+
+        # Comprobar que conecta con el bloque anterior
+        if chain and block.header.prev_hash != chain[-1].hash:
+            return False
+
+        # En PoS no exigimos dificultad de minería
+        if block.header.difficulty != 0:
+            return False
+
+        # Comprobar la raíz de Merkle
+        expected = merkle_root(
+            [tx.tx_id for tx in block.transactions]
+        )
+
+        if block.header.merkle_root != expected:
+            return False
+
+        # Verificar las firmas de las transacciones
+        for tx in block.transactions:
+            if not tx.verify():
+                return False
+
+        return True
+
+    def select_chain(
+        self,
+        candidates: list[list[Block]]
+    ) -> list[Block]:
+        return max(candidates, key=len)
