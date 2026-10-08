@@ -36,7 +36,7 @@ events = []  # max 200, protected by state_lock
 
 # Guarda la ronda PoS que está en curso
 active_pos_round = None
-
+active_pos_candidate = None
 candidates: list = []  # reset at start of each mining round
 
 
@@ -637,7 +637,8 @@ def register_routes(app):
 
     @app.route("/pos_round", methods=["POST"])
     def pos_round():
-        global active_pos_round
+        global active_pos_round, active_pos_candidate        
+        
         data = request.get_json(silent=True) or {}
         stakes = data.get("stakes", {})
         with state_lock:
@@ -668,12 +669,46 @@ def register_routes(app):
         proposer = round_.sortition()
         proposer_id = proposer.id if proposer else None
         A = sum(v.stake for v in round_.validators)
+                # Crear un bloque candidato PoS
+        proposer_node = next(
+            (n for n in current_nodes if n.node_id == proposer_id),
+            None
+        )
+
+        if proposer_node is None:
+            return jsonify({
+                "ok": False,
+                "error": "No se encontró el nodo proponente."
+            }), 400
+
+        header = BlockHeader(
+            version=1,
+            prev_hash=proposer_node.chain[-1].hash,
+            merkle_root=None,
+            timestamp=time.time(),
+            difficulty=0,
+            nonce=0,
+            miner=proposer_node.address
+        )
+
+        candidate_block = Block(
+            header,
+            list(proposer_node.mempool)
+        )
+
+        candidate_block = proposer_node.consensus.prepare_block(
+            candidate_block,
+            proposer_node.chain
+        )
         with state_lock:
             active_pos_round = round_
+            active_pos_candidate = candidate_block
 
         return jsonify({
             "ok": True,
             "proposer_id": proposer_id,
+            "candidate_hash": candidate_block.hash,
+            "candidate_txs": len(candidate_block.transactions),
             "attempt": 0,
             "state": round_.state,
             "A": A,
