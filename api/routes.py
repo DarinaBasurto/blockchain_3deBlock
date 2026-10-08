@@ -676,6 +676,7 @@ def register_routes(app):
         
         data = request.get_json(silent=True) or {}
         stakes = data.get("stakes", {})
+        dishonest = data.get("dishonest", False)
         with state_lock:
             current_nodes = list(nodes)
             last_hash = mining_state["last_block_hash"] or current_nodes[0].chain[-1].hash
@@ -747,6 +748,10 @@ def register_routes(app):
             candidate_block,
             proposer_node.chain
         )
+        # Simular un proponente deshonesto:
+        # modificar el contenido del bloque sin actualizar su hash
+        if dishonest:
+            candidate_block.header.timestamp += 100
         with state_lock:
             active_pos_round = round_
             active_pos_candidate = candidate_block
@@ -797,6 +802,23 @@ def register_routes(app):
                     "ok": False,
                     "error": "La ronda no está en etapa de votación."
                 }), 400
+
+            # Verificar que el candidato no haya sido manipulado
+            candidate = active_pos_candidate
+
+            if candidate is None:
+                return jsonify({
+                    "ok": False,
+                    "error": "No hay un bloque candidato."
+                }), 400
+
+            candidate_valid = (
+                candidate.hash == candidate.compute_hash()
+            )
+
+            # Si el bloque fue manipulado, el validador vota NO
+            if not candidate_valid:
+                yes = False
 
             ok, msg = active_pos_round.vote(validator_id, yes)
 
