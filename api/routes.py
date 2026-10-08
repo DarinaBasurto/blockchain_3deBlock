@@ -27,6 +27,13 @@ from blockchain.ledger import compute_balances, available_of
 # CONFIGURACIÓN
 # =========================================================
 
+# Penalizaciones acumuladas por dirección de wallet
+pos_penalties = {}
+pos_excluded = set()
+pos_attempt = 0
+active_pos_round = None
+active_pos_candidate = None
+
 DIFFICULTY = 5
 REWARD = 50
 NUM_NODES = 4
@@ -92,7 +99,10 @@ def register_pos_approval(block_hash: str, current_nodes: list) -> bool:
     return True
 
 def rebuild_network(num_nodes: int, difficulty: int) -> None:
+    global pos_penalties, active_pos_round, active_pos_candidate
+    global pos_excluded, pos_attempt
     global network, nodes, wallets, mining_state, node_stats, stop_event
+    global pos_penalties, active_pos_round, active_pos_candidate    
     with state_lock:
         fresh_network = Network()
         fresh_nodes = []
@@ -143,6 +153,9 @@ def rebuild_network(num_nodes: int, difficulty: int) -> None:
         wallets = fresh_wallets
         mining_state = fresh_mining_state
         stop_event = threading.Event()
+        pos_penalties = {}
+        active_pos_round = None
+        active_pos_candidate = None
 
         CONFIG.update({"num_nodes": num_nodes, "difficulty": difficulty})
 
@@ -637,9 +650,12 @@ def register_routes(app):
         if not ok:
             return jsonify({"ok": False, "error": msg}), 400
 
-        rebuild_network(num_nodes, difficulty)
         with state_lock:
             CONFIG["mode"] = mode
+
+        rebuild_network(num_nodes, difficulty)
+
+        with state_lock:
             cfg_copy = dict(CONFIG)
         log_event("config", f"N={num_nodes} D={difficulty} mode={mode}")
         return jsonify({"ok": True, "config": cfg_copy})
@@ -655,7 +671,8 @@ def register_routes(app):
 
     @app.route("/pos_round", methods=["POST"])
     def pos_round():
-        global active_pos_round, active_pos_candidate        
+        global active_pos_round, active_pos_candidate
+        global pos_attempt
         
         data = request.get_json(silent=True) or {}
         stakes = data.get("stakes", {})
@@ -673,11 +690,23 @@ def register_routes(app):
             bal = available_of(
                 addr,
                 n.chain,
-                bootstrap=n.bootstrap_balance
+                bootstrap=n.bootstrap_balance,
+                penalties=pos_penalties
             )
             validators.append(Validator(id=n.node_id, address=addr, balance=bal))
 
-        round_ = PoSRound(validators, prev_hash=last_hash, block_number=height + 1)
+        # Excluir a los proponentes penalizados en este bloque
+        validators = [
+            v for v in validators
+            if v.id not in pos_excluded
+        ]
+
+        round_ = PoSRound(
+            validators,
+            prev_hash=last_hash,
+            block_number=height + 1,
+            attempt=pos_attempt
+        )
         ok, msg = round_.collect_stakes(stakes)
         if not ok:
             return jsonify({"ok": False, "error": msg}), 400
@@ -727,7 +756,7 @@ def register_routes(app):
             "proposer_id": proposer_id,
             "candidate_hash": candidate_block.hash,
             "candidate_txs": len(candidate_block.transactions),
-            "attempt": 0,
+            "attempt": round_.attempt,
             "state": round_.state,
             "A": A,
             "V": 0,
@@ -792,10 +821,15 @@ def register_routes(app):
     @app.route("/pos_finalize", methods=["POST"])
     def pos_finalize():
         global active_pos_round, active_pos_candidate
-
+        global pos_attempt
         with state_lock:
             round_ = active_pos_round
             candidate = active_pos_candidate
+            if round_ is not None and getattr(round_, "closed", False):
+                return jsonify({
+                    "ok": False,
+                    "error": "Esta ronda ya fue finalizada."
+                }), 400
 
             if round_ is None or candidate is None:
                 return jsonify({
@@ -820,6 +854,7 @@ def register_routes(app):
                 }), 400
 
             accepted, V, A = round_.tally()
+            
             # Comprobar que el candidato sigue conectado a la cadena
             if accepted:
                 if not all(
@@ -849,14 +884,70 @@ def register_routes(app):
                         "ok": False,
                         "error": "No se pudo registrar la aprobación PoS."
                     }), 400
+                # Comprobar que todos los nodos aprobarían el bloque
+                if not all(
+                    n.consensus.validate_block(candidate, n.chain)
+                    for n in nodes
+                ):
+                    return jsonify({
+                        "ok": False,
+                        "error": "Algún nodo rechazó el bloque candidato."
+                    }), 400
+                # Incorporar el bloque aprobado en todos los nodos
+                for n in nodes:
+                    n.receive_block(candidate)
+
+                # Comprobar que todos lo incorporaron
+                if not all(
+                    n.chain[-1].hash == candidate.hash
+                    for n in nodes
+                ):
+                    return jsonify({
+                        "ok": False,
+                        "error": "No todos los nodos incorporaron el bloque."
+                    }), 500
                 
+                # Reiniciar exclusiones para el siguiente bloque
+                pos_excluded.clear()
+                pos_attempt = 0
+
+            # Cerrar la ronda y calcular la penalización
+            result = round_.finalize()
+
+            # Si el bloque fue rechazado, descontar el castigo
+            if not accepted:
+                proposer_id = result["proposer_id"]
+                slashed = result["slashed"]
+
+                # Registrar el rechazo para el siguiente sorteo
+                if proposer_id is not None:
+                    pos_excluded.add(proposer_id)
+
+                pos_attempt += 1
+
+                if proposer_id is not None and slashed > 0:
+                    proposer_node = next(
+                        (n for n in nodes if n.node_id == proposer_id),
+                        None
+                    )
+
+                    if proposer_node is not None:
+                        addr = proposer_node.address
+                        pos_penalties[addr] = (
+                            pos_penalties.get(addr, 0.0) + slashed
+                        )
+
+            round_.closed = True           
             return jsonify({
                 "ok": True,
                 "accepted": accepted,
                 "candidate_hash": candidate.hash,
                 "V": V,
                 "A": A,
-                "state": "APROBACION_PENDIENTE" if accepted else "RECHAZO_PENDIENTE"
+                "state": round_.state,
+                "proposer_id": result["proposer_id"],
+                "slashed": result["slashed"],
+                "new_attempt_needed": result["new_attempt_needed"]
             })
         
     @app.route("/estado")
@@ -884,7 +975,8 @@ def register_routes(app):
                 if is_valid:
                     balances = compute_balances(
                         node.chain,
-                        bootstrap=node.bootstrap_balance
+                        bootstrap=node.bootstrap_balance,
+                        penalties=pos_penalties
                     )
 
                     node_available = (

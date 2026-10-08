@@ -8,7 +8,8 @@ REWARD = 50.0
 
 
 def compute_balances(chain: list, maturity: int = 6,
-                     bootstrap: dict | None = None) -> dict:
+                     bootstrap: dict | None = None,
+                     penalties: dict | None = None) -> dict:
     """Return {address: {"available", "pending", "sent", "received"}}.
 
     Block at index h (genesis=0) rewards its miner with REWARD. The
@@ -31,7 +32,7 @@ def compute_balances(chain: list, maturity: int = 6,
     tip = len(chain) - 1
     for h, blk in enumerate(chain):
         miner = blk.header.miner
-        if miner:
+        if miner and blk.header.difficulty > 0:
             if tip - h >= maturity:
                 b(miner)
                 matured[miner] += REWARD
@@ -49,7 +50,8 @@ def compute_balances(chain: list, maturity: int = 6,
             entry["received"] += amt
 
     for addr, d in bal.items():
-        raw = d["received"] + matured[addr] - d["sent"]
+        penalty = (penalties or {}).get(addr, 0.0)
+        raw = d["received"] + matured[addr] - d["sent"] - penalty
         if raw < 0:
             print(f"warning: clamping negative balance for "
                   f"{addr!r}: {raw}", file=sys.stderr)
@@ -60,7 +62,14 @@ def compute_balances(chain: list, maturity: int = 6,
 
 
 def available_of(address: str, chain: list, maturity: int = 6,
-                 bootstrap: dict | None = None) -> float:
-    """Return the available balance of `address`, or 0.0 if unknown."""
-    entry = compute_balances(chain, maturity, bootstrap).get(address)
+                 bootstrap: dict | None = None,
+                 penalties: dict | None = None) -> float:
+    """Return the available balance of an address, including penalties."""
+    entry = compute_balances(
+        chain,
+        maturity=maturity,
+        bootstrap=bootstrap,
+        penalties=penalties
+    ).get(address)
+
     return entry["available"] if entry else 0.0
