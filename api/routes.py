@@ -929,6 +929,11 @@ def register_routes(app):
                         "error": "No todos los nodos incorporaron el bloque."
                     }), 500
                 
+                # Actualizar el tip de la simulación con el bloque PoS
+                mining_state["last_block_hash"] = candidate.hash
+                if round_.proposer is not None:
+                    mining_state["winner"] = round_.proposer.id
+
                 # Reiniciar exclusiones para el siguiente bloque
                 pos_excluded.clear()
                 pos_attempt = 0

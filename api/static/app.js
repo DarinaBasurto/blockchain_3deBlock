@@ -1107,6 +1107,13 @@ async function runPosRound() {
         return;
     }
 
+    const posBtn = $("pos-run");
+    const out = $("pos-output");
+
+    if (posBtn) {
+        posBtn.disabled = true;
+    }
+
     try {
 
         const res = await fetch("/pos_round", {
@@ -1134,19 +1141,106 @@ async function runPosRound() {
             return;
         }
 
-        const out = $("pos-output");
+        const proposerId = payload.proposer_id;
+        let V = payload.V || 0;
+        let A = payload.A || 0;
+
+        // Todos los nodos votan SÍ (voto honesto por defecto).
+        // Los nodos fuera de la ronda devuelven error y se ignoran.
+        for (const validatorId of Array.from(inputs).map(
+            (inp) => inp.dataset.node
+        )) {
+
+            const voteRes = await fetch("/pos_vote", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    validator_id: validatorId,
+                    yes: true
+                })
+            });
+
+            let votePayload = {};
+
+            try {
+                votePayload = await voteRes.json();
+            }
+            catch (_) {
+                votePayload = {};
+            }
+
+            if (voteRes.ok && votePayload.ok) {
+                V = votePayload.V;
+                A = votePayload.A;
+            }
+
+            if (out) {
+                out.textContent = JSON.stringify(
+                    {
+                        proposer_id: proposerId,
+                        state: "VOTACION",
+                        A: A,
+                        V: V
+                    },
+                    null,
+                    2
+                );
+            }
+        }
+
+        const finRes = await fetch("/pos_finalize", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+        });
+
+        let finPayload = {};
+
+        try {
+            finPayload = await finRes.json();
+        }
+        catch (_) {
+            finPayload = {};
+        }
+
+        if (!finRes.ok || !finPayload.ok) {
+
+            setInlineError(
+                "pos-error",
+                finPayload.error || ("Error HTTP " + finRes.status)
+            );
+
+            return;
+        }
 
         if (out) {
-
             out.textContent = JSON.stringify(
                 {
-                    proposer_id: payload.proposer_id,
-                    state: payload.state,
-                    A: payload.A,
-                    V: payload.V
+                    proposer_id: finPayload.proposer_id,
+                    state: finPayload.state,
+                    accepted: finPayload.accepted,
+                    A: finPayload.A,
+                    V: finPayload.V,
+                    slashed: finPayload.slashed,
+                    new_attempt_needed: finPayload.new_attempt_needed,
+                    candidate_hash: finPayload.candidate_hash
                 },
                 null,
                 2
+            );
+        }
+
+        if (finPayload.accepted) {
+            await fetchEstado();
+            await refreshChainTable();
+        }
+        else {
+            setInlineError(
+                "pos-error",
+                "Bloque rechazado. Proponente penalizado con " +
+                    finPayload.slashed +
+                    (finPayload.new_attempt_needed
+                        ? ". Se requiere un nuevo intento."
+                        : ".")
             );
         }
     }
@@ -1156,6 +1250,12 @@ async function runPosRound() {
             "pos-error",
             "No se pudo iniciar la ronda: " + err.message
         );
+    }
+    finally {
+
+        if (posBtn) {
+            posBtn.disabled = false;
+        }
     }
 }
 
